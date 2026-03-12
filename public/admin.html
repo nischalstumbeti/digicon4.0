@@ -444,7 +444,6 @@
             </div>
         </nav>
         <div class="sidebar-footer">
-            <div>Cybernerds × OWASP</div>
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
     </aside>
@@ -519,37 +518,6 @@
                                         </tr>
                                     </thead>
                                     <tbody id="problemsBody"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Registrations -->
-                <div class="section">
-                    <div class="section-header">
-                        <div class="section-header-left">👥 Registrations</div>
-                        <div class="section-header-actions">
-                            <button class="btn btn-outline btn-sm" onclick="exportData('registrations','pdf')">📄 Export PDF</button>
-                        </div>
-                    </div>
-                    <div class="section-body">
-                        <div id="registrationsLoading" class="loading-text">Loading registrations…</div>
-                        <div id="registrationsTable" style="display:none;">
-                            <div class="table-wrap">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Team #</th>
-                                            <th>Team Name</th>
-                                            <th>Team Leader</th>
-                                            <th>Team Members</th>
-                                            <th>Problem Statement</th>
-                                            <th>Registered At</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="registrationsBody"></tbody>
                                 </table>
                             </div>
                         </div>
@@ -886,7 +854,6 @@ async function fetchData() {
         } catch (_) {}
         renderStats(problems, registrations);
         renderProblems(problems);
-        renderRegistrations(registrations);
         updateReleaseUI(released);
         const u = document.getElementById('updateTime'); if (u) u.textContent = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
     } catch (err) {
@@ -965,36 +932,6 @@ function renderProblems(problems) {
     }
     document.getElementById('problemsLoading').style.display = 'none';
     document.getElementById('problemsTable').style.display = 'block';
-}
-
-function renderRegistrations(registrations) {
-    registrations.sort((a, b) => {
-        const na = parseInt(a.team_number, 10), nb = parseInt(b.team_number, 10);
-        return (!isNaN(na) && !isNaN(nb)) ? na - nb : String(a.team_number).localeCompare(String(b.team_number));
-    });
-    const tbody = document.getElementById('registrationsBody');
-    tbody.innerHTML = '';
-    if (registrations.length === 0) {
-        tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No registrations yet.</td></tr>';
-    } else {
-        registrations.forEach(r => {
-            const tr = document.createElement('tr');
-            const teamMembers = (r.team_members || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const safeTeamNum = String(r.team_number || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-            tr.innerHTML = `
-                <td>${(r.team_number || '').replace(/</g, '&lt;')}</td>
-                <td>${(r.team_name || '').replace(/</g, '&lt;')}</td>
-                <td>${(r.team_leader || '').replace(/</g, '&lt;')}</td>
-                <td>${teamMembers || '—'}</td>
-                <td>${(r.problem_title || '').replace(/</g, '&lt;')}</td>
-                <td>${new Date(r.registration_date_time).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true })} IST</td>
-                <td><button class="btn btn-danger btn-sm" data-team-num="${safeTeamNum}" onclick="deleteRegistration(this.getAttribute('data-team-num'))">🗑 Delete</button></td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-    document.getElementById('registrationsLoading').style.display = 'none';
-    document.getElementById('registrationsTable').style.display = 'block';
 }
 
 /* ── CONFIRM MODAL ─────────────────────────────────────── */
