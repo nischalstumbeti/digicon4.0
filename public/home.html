@@ -247,9 +247,11 @@
         </div>
       </div>
       <div id="teamStep3" class="team-select-step" style="display: none;">
-        <h3>Enter Team Member Details</h3>
-        <p style="color: #9ca3af; margin-bottom: 20px; font-size: 0.95rem;">Enter names of all team members (comma-separated).</p>
-        <input type="text" id="inputTeamMembers" class="team-select-input" placeholder="e.g. Jane, Mike, Sarah" />
+        <h3>Enter Team Members</h3>
+        <p style="color: #9ca3af; margin-bottom: 20px; font-size: 0.95rem;">Enter names of your 3 team members.</p>
+        <input type="text" id="inputMember1" class="team-select-input" placeholder="Team Member 1" style="margin-bottom: 10px;" />
+        <input type="text" id="inputMember2" class="team-select-input" placeholder="Team Member 2" style="margin-bottom: 10px;" />
+        <input type="text" id="inputMember3" class="team-select-input" placeholder="Team Member 3" />
         <div class="cyber-modal-btns" style="margin-top: 20px;">
           <button class="cyber-modal-btn" id="btnStep3Back" style="background: transparent; color: #e63946; border: 2px solid #e63946;">Back</button>
           <button class="cyber-modal-btn" id="btnStep3Next">Next</button>
@@ -348,8 +350,17 @@
     function resetModal() {
       document.getElementById('inputTeamName').value = '';
       document.getElementById('inputTeamLeader').value = '';
-      document.getElementById('inputTeamMembers').value = '';
+      document.getElementById('inputMember1').value = '';
+      document.getElementById('inputMember2').value = '';
+      document.getElementById('inputMember3').value = '';
       showStep(1);
+    }
+
+    function getTeamMembersStr() {
+      const m1 = document.getElementById('inputMember1').value.trim();
+      const m2 = document.getElementById('inputMember2').value.trim();
+      const m3 = document.getElementById('inputMember3').value.trim();
+      return [m1, m2, m3].filter(Boolean).join(', ');
     }
 
     document.getElementById('selectProblemBtn').addEventListener('click', () => {
@@ -374,7 +385,7 @@
     document.getElementById('btnStep3Next').addEventListener('click', () => {
       const teamName = document.getElementById('inputTeamName').value.trim();
       const leader = document.getElementById('inputTeamLeader').value.trim();
-      const members = document.getElementById('inputTeamMembers').value.trim();
+      const members = getTeamMembersStr();
       document.getElementById('confirmTeamName').textContent = teamName || '—';
       document.getElementById('confirmTeamLeader').textContent = leader || '—';
       document.getElementById('confirmTeamMembers').textContent = members || '—';
@@ -385,7 +396,7 @@
     document.getElementById('btnStep4Confirm').addEventListener('click', () => {
       const teamName = document.getElementById('inputTeamName').value.trim();
       const leader = document.getElementById('inputTeamLeader').value.trim();
-      const members = document.getElementById('inputTeamMembers').value.trim();
+      const members = getTeamMembersStr();
       if (!teamName || !leader) return;
       const teamNumber = 'T' + Date.now();
       const data = { teamNumber, teamName, teamLeader: leader, teamMembers: members };
