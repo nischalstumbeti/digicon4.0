@@ -438,6 +438,10 @@
                 <span class="nav-icon">👥</span>
                 <span>Add Participants</span>
             </div>
+            <div class="nav-item" data-page="teams-registration" onclick="navigateTo('teams-registration')">
+                <span class="nav-icon">📋</span>
+                <span>Teams Registration</span>
+            </div>
         </nav>
         <div class="sidebar-footer">
             <div>Cybernerds × OWASP</div>
@@ -742,6 +746,45 @@ Jane Smith,21CS002,KARE,Madurai,jane@mail.com,9876543211,CSE,F,3</div>
                 </div>
             </div><!-- /page-add-teams -->
 
+            <!-- TEAMS REGISTRATION PAGE -->
+            <div class="page" id="page-teams-registration">
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-header-left">📋 Teams Registration</div>
+                        <div class="section-header-actions">
+                            <span id="teamsRegCount" style="font-size: 0.9rem; color: #94a3b8;">—</span>
+                            <button class="btn btn-outline btn-sm" onclick="exportData('registrations','pdf')" style="margin-left: 8px;">📄 Export PDF</button>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <p style="color: #9ca3af; margin-bottom: 16px; font-size: 0.9rem;">View all registered teams and their problem statement selections. Use Delete to remove a team registration if needed.</p>
+                        <div id="teamsRegLoading" class="loading-text">Loading teams…</div>
+                        <div id="teamsRegTable" style="display:none;">
+                            <div class="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Team #</th>
+                                            <th>Team Name</th>
+                                            <th>Team Leader</th>
+                                            <th>Team Members</th>
+                                            <th>Problem Statement</th>
+                                            <th>Registered At</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="teamsRegBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="teamsRegEmpty" style="display:none; padding: 32px; text-align: center; color: #666;">
+                            No teams registered yet.
+                        </div>
+                    </div>
+                </div>
+            </div><!-- /page-teams-registration -->
+
         </div><!-- /page-content -->
         <footer class="site-footer">
             <div class="footer-marquee">
@@ -787,16 +830,19 @@ function logout() {
 }
 
 /* ── NAVIGATION ────────────────────────────────────────── */
-const pageTitles = { home: 'Home', 'add-problems': 'Add Problem Statements', 'add-teams': 'Add Teams' };
+const pageTitles = { home: 'Home', 'add-problems': 'Add Problem Statements', 'add-teams': 'Add Teams', 'teams-registration': 'Teams Registration' };
 
 function navigateTo(page) {
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    document.querySelector(`[data-page="${page}"]`).classList.add('active');
+    const navEl = document.querySelector(`[data-page="${page}"]`);
+    if (navEl) navEl.classList.add('active');
     document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
-    document.getElementById('page-' + page).classList.add('active');
+    const pageEl = document.getElementById('page-' + page);
+    if (pageEl) pageEl.classList.add('active');
     const t = document.getElementById('topbarTitle'); if (t) t.textContent = pageTitles[page] || page;
     if (page === 'home') fetchData();
     if (page === 'add-teams') loadParticipantsList();
+    if (page === 'teams-registration') loadTeamsRegistrations();
 }
 
 /* ── ADD OPTION SELECTION ─────────────────────────────── */
@@ -932,14 +978,15 @@ function renderRegistrations(registrations) {
         registrations.forEach(r => {
             const tr = document.createElement('tr');
             const teamMembers = (r.team_members || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const safeTeamNum = String(r.team_number || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
             tr.innerHTML = `
-                <td>${r.team_number}</td>
-                <td>${r.team_name || ''}</td>
-                <td>${r.team_leader || ''}</td>
+                <td>${(r.team_number || '').replace(/</g, '&lt;')}</td>
+                <td>${(r.team_name || '').replace(/</g, '&lt;')}</td>
+                <td>${(r.team_leader || '').replace(/</g, '&lt;')}</td>
                 <td>${teamMembers || '—'}</td>
-                <td>${r.problem_title || ''}</td>
+                <td>${(r.problem_title || '').replace(/</g, '&lt;')}</td>
                 <td>${new Date(r.registration_date_time).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true })} IST</td>
-                <td><button class="btn btn-danger btn-sm" onclick="deleteRegistration('${r.team_number}')">🗑 Delete</button></td>
+                <td><button class="btn btn-danger btn-sm" data-team-num="${safeTeamNum}" onclick="deleteRegistration(this.getAttribute('data-team-num'))">🗑 Delete</button></td>
             `;
             tbody.appendChild(tr);
         });
@@ -982,16 +1029,22 @@ async function deleteProblem(id, title) {
 /* ── DELETE REGISTRATION ───────────────────────────────── */
 const deletingTeams = new Set();
 async function deleteRegistration(teamNumber) {
-    if (!confirm(`Delete registration for team ${teamNumber}?`)) return;
     if (deletingTeams.has(String(teamNumber))) return;
-    deletingTeams.add(String(teamNumber));
-    try {
-        const res = await fetch(`/api/registration/${teamNumber}`, { method: 'DELETE', cache: 'no-store' });
-        if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
-        showNotification(`Deleted registration: Team ${teamNumber}`);
-        fetchData();
-    } catch (err) { showNotification('Error: ' + err.message, true); }
-    finally { deletingTeams.delete(String(teamNumber)); }
+    showConfirmModal(
+        'Delete Team Registration',
+        `Are you sure you want to delete the registration for team "${teamNumber}"? This action cannot be undone.`,
+        async () => {
+            deletingTeams.add(String(teamNumber));
+            try {
+                const res = await fetch(`/api/registration/${encodeURIComponent(teamNumber)}`, { method: 'DELETE', cache: 'no-store' });
+                if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+                showNotification(`Deleted registration: Team ${teamNumber}`);
+                fetchData();
+                loadTeamsRegistrations();
+            } catch (err) { showNotification('Error: ' + err.message, true); }
+            finally { deletingTeams.delete(String(teamNumber)); }
+        }
+    );
 }
 
 /* ── EXPORT ────────────────────────────────────────────── */
@@ -1288,6 +1341,53 @@ async function loadParticipantsList() {
     }
 }
 
+async function loadTeamsRegistrations() {
+    const loadingEl = document.getElementById('teamsRegLoading');
+    const tableEl = document.getElementById('teamsRegTable');
+    const emptyEl = document.getElementById('teamsRegEmpty');
+    const bodyEl = document.getElementById('teamsRegBody');
+    const countEl = document.getElementById('teamsRegCount');
+    if (!loadingEl || !tableEl || !emptyEl || !bodyEl) return;
+    loadingEl.style.display = 'block';
+    tableEl.style.display = 'none';
+    emptyEl.style.display = 'none';
+    try {
+        const res = await fetch('/api/registrations', { cache: 'no-store' });
+        const registrations = await res.json();
+        loadingEl.style.display = 'none';
+        if (countEl) countEl.textContent = registrations.length + ' team(s)';
+        if (registrations.length === 0) {
+            emptyEl.style.display = 'block';
+        } else {
+            registrations.sort((a, b) => {
+                const na = parseInt(a.team_number, 10), nb = parseInt(b.team_number, 10);
+                return (!isNaN(na) && !isNaN(nb)) ? na - nb : String(a.team_number).localeCompare(String(b.team_number));
+            });
+            tableEl.style.display = 'block';
+            const escape = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            bodyEl.innerHTML = registrations.map((r, i) => {
+                const teamNum = escape(r.team_number);
+                const teamMembers = escape((r.team_members || '').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+                return `<tr>
+                    <td>${i + 1}</td>
+                    <td>${teamNum || '—'}</td>
+                    <td>${escape(r.team_name) || '—'}</td>
+                    <td>${escape(r.team_leader) || '—'}</td>
+                    <td>${teamMembers || '—'}</td>
+                    <td>${escape(r.problem_title) || '—'}</td>
+                    <td>${new Date(r.registration_date_time).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true })} IST</td>
+                    <td><button class="btn btn-danger btn-sm" data-team-num="${teamNum}" onclick="deleteRegistration(this.getAttribute('data-team-num'))">🗑 Delete</button></td>
+                </tr>`;
+            }).join('');
+        }
+    } catch (err) {
+        loadingEl.style.display = 'none';
+        emptyEl.style.display = 'block';
+        emptyEl.textContent = 'Failed to load: ' + err.message;
+        if (countEl) countEl.textContent = '—';
+    }
+}
+
 /* ── REAL-TIME SSE ─────────────────────────────────────── */
 let evtSrc = null;
 function connectSSE() {
@@ -1300,7 +1400,10 @@ function connectSSE() {
     evtSrc.onmessage = e => {
         try {
             const d = JSON.parse(e.data);
-            if (['registration','deletion','reset','problems'].includes(d.type)) fetchData();
+            if (['registration','deletion','reset','problems'].includes(d.type)) {
+                fetchData();
+                loadTeamsRegistrations();
+            }
         } catch (_) {}
     };
     evtSrc.onerror = () => {
