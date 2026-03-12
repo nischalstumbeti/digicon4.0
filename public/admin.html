@@ -752,6 +752,7 @@ Jane Smith,21CS002,KARE,Madurai,jane@mail.com,9876543211,CSE,F,3</div>
                         <div class="section-header-actions">
                             <span id="teamsRegCount" style="font-size: 0.9rem; color: #94a3b8;">—</span>
                             <button class="btn btn-outline btn-sm" onclick="loadTeamsRegistrations()" style="margin-left: 8px;">🔄 Refresh</button>
+                            <button class="btn btn-outline btn-sm" onclick="exportRegistrationsToCSV()" style="margin-left: 8px;">📊 Export to CSV</button>
                             <button class="btn btn-outline btn-sm" onclick="exportData('registrations','pdf')" style="margin-left: 8px;">📄 Export PDF</button>
                         </div>
                     </div>
@@ -1046,6 +1047,41 @@ async function deleteRegistration(teamNumber) {
 }
 
 /* ── EXPORT ────────────────────────────────────────────── */
+async function exportRegistrationsToCSV() {
+    try {
+        const res = await fetch('/api/registrations', { cache: 'no-store' });
+        const registrations = await res.json();
+        if (!Array.isArray(registrations)) {
+            showNotification('No data to export.', true);
+            return;
+        }
+        const headers = ['#', 'Team #', 'Team Name', 'Team Leader', 'Team Members', 'Problem Statement', 'Registered At'];
+        const escapeCsv = (v) => {
+            const s = String(v ?? '').replace(/"/g, '""');
+            return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s}"` : s;
+        };
+        const rows = registrations.map((r, i) => [
+            i + 1,
+            r.team_number || '',
+            r.team_name || '',
+            r.team_leader || '',
+            (r.team_members || '').replace(/\n/g, ' '),
+            r.problem_title || '',
+            r.registration_date_time ? new Date(r.registration_date_time).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true }) + ' IST' : ''
+        ].map(escapeCsv).join(','));
+        const csv = [headers.join(','), ...rows].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'teams-registration-' + new Date().toISOString().slice(0, 10) + '.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        showNotification('CSV exported successfully.');
+    } catch (err) {
+        showNotification('Export failed: ' + err.message, true);
+    }
+}
+
 function exportData(type, format) {
     const a = document.createElement('a');
     a.href = `/api/export/${type}/${format}`;
