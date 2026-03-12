@@ -757,8 +757,8 @@ Jane Smith,21CS002,KARE,Madurai,jane@mail.com,9876543211,CSE,F,3</div>
                         </div>
                     </div>
                     <div class="section-body">
-                        <p style="color: #9ca3af; margin-bottom: 16px; font-size: 0.9rem;">View all registered teams and their problem statement selections. Use Delete to remove a team registration if needed.</p>
-                        <div id="teamsRegLoading" class="loading-text">Loading teams…</div>
+                        <p style="color: #9ca3af; margin-bottom: 16px; font-size: 0.9rem;">Teams are stored in the database when users complete registration. Data is fetched from the database below. Use Delete to remove a team registration if needed.</p>
+                        <div id="teamsRegLoading" class="loading-text">Loading teams from database…</div>
                         <div id="teamsRegTable" style="display:none;">
                             <div class="table-wrap">
                                 <table>
@@ -1352,7 +1352,7 @@ async function loadTeamsRegistrations() {
     tableEl.style.display = 'none';
     emptyEl.style.display = 'none';
     try {
-        const res = await fetch('/api/registrations', { cache: 'no-store' });
+        const res = await fetch('/api/admin/registrations', { cache: 'no-store' });
         const registrations = await res.json();
         loadingEl.style.display = 'none';
         if (countEl) countEl.textContent = registrations.length + ' team(s)';

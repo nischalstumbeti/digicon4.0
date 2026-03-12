@@ -479,6 +479,18 @@ app.delete('/api/admin/teams', async (req, res) => {
   }
 });
 
+// Admin: get all registrations (teams) from database
+app.get('/api/admin/registrations', async (req, res) => {
+  res.set({ 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
+  try {
+    const registrations = await db.getAllRegistrations();
+    res.json(registrations);
+  } catch (err) {
+    console.error('Error fetching registrations:', err);
+    res.status(500).json([]);
+  }
+});
+
 // Admin: get all participants
 app.get('/api/admin/participants', async (req, res) => {
   res.set({ 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
