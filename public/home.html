@@ -251,16 +251,25 @@
       </div>
       <div id="teamStep3" class="team-select-step" style="display: none;">
         <h3>Enter Team Members</h3>
-        <p style="color: #9ca3af; margin-bottom: 20px; font-size: 0.95rem;">Type to search from the participants list.</p>
-        <div class="team-search-wrap" style="margin-bottom: 10px;">
+        <p style="color: #9ca3af; margin-bottom: 12px; font-size: 0.95rem;">Team size (including leader): 2, 3, or 4 — your choice.</p>
+        <div style="margin-bottom: 16px;">
+          <label style="color: #9ca3af; font-size: 0.9rem;">Team size:</label>
+          <select id="teamSizeSelect" class="team-select-input" style="margin-top: 6px; cursor: pointer;">
+            <option value="2">2 members (1 leader + 1 member)</option>
+            <option value="3">3 members (1 leader + 2 members)</option>
+            <option value="4">4 members (1 leader + 3 members)</option>
+          </select>
+        </div>
+        <p style="color: #9ca3af; margin-bottom: 12px; font-size: 0.9rem;">Type to search from the participants list.</p>
+        <div class="team-search-wrap member-field" id="wrapMember1" style="margin-bottom: 10px;">
           <input type="text" id="inputMember1" class="team-select-input" placeholder="Team Member 1 - type to search" autocomplete="off" />
           <div class="team-search-results" id="acMember1"></div>
         </div>
-        <div class="team-search-wrap" style="margin-bottom: 10px;">
+        <div class="team-search-wrap member-field" id="wrapMember2" style="margin-bottom: 10px;">
           <input type="text" id="inputMember2" class="team-select-input" placeholder="Team Member 2 - type to search" autocomplete="off" />
           <div class="team-search-results" id="acMember2"></div>
         </div>
-        <div class="team-search-wrap">
+        <div class="team-search-wrap member-field" id="wrapMember3">
           <input type="text" id="inputMember3" class="team-select-input" placeholder="Team Member 3 - type to search" autocomplete="off" />
           <div class="team-search-results" id="acMember3"></div>
         </div>
@@ -362,17 +371,32 @@
     function resetModal() {
       document.getElementById('inputTeamName').value = '';
       document.getElementById('inputTeamLeader').value = '';
+      document.getElementById('teamSizeSelect').value = '2';
       document.getElementById('inputMember1').value = '';
       document.getElementById('inputMember2').value = '';
       document.getElementById('inputMember3').value = '';
+      updateMemberFieldsVisibility();
       showStep(1);
     }
 
+    function updateMemberFieldsVisibility() {
+      const size = parseInt(document.getElementById('teamSizeSelect').value, 10) || 2;
+      const count = size - 1;
+      document.getElementById('wrapMember1').style.display = count >= 1 ? 'block' : 'none';
+      document.getElementById('wrapMember2').style.display = count >= 2 ? 'block' : 'none';
+      document.getElementById('wrapMember3').style.display = count >= 3 ? 'block' : 'none';
+      if (count < 2) document.getElementById('inputMember2').value = '';
+      if (count < 3) document.getElementById('inputMember3').value = '';
+    }
+
     function getTeamMembersStr() {
-      const m1 = document.getElementById('inputMember1').value.trim();
-      const m2 = document.getElementById('inputMember2').value.trim();
-      const m3 = document.getElementById('inputMember3').value.trim();
-      return [m1, m2, m3].filter(Boolean).join(', ');
+      const size = parseInt(document.getElementById('teamSizeSelect').value, 10) || 2;
+      const count = size - 1;
+      const members = [];
+      if (count >= 1) members.push(document.getElementById('inputMember1').value.trim());
+      if (count >= 2) members.push(document.getElementById('inputMember2').value.trim());
+      if (count >= 3) members.push(document.getElementById('inputMember3').value.trim());
+      return members.filter(Boolean).join(', ');
     }
 
     // Participant autocomplete: fetch from admin-uploaded CSV
@@ -442,11 +466,24 @@
     document.getElementById('btnStep2Next').addEventListener('click', () => {
       const leader = document.getElementById('inputTeamLeader').value.trim();
       if (!leader) return;
+      updateMemberFieldsVisibility();
       showStep(3);
     });
 
+    document.getElementById('teamSizeSelect').addEventListener('change', updateMemberFieldsVisibility);
+
     document.getElementById('btnStep3Back').addEventListener('click', () => showStep(2));
     document.getElementById('btnStep3Next').addEventListener('click', () => {
+      const size = parseInt(document.getElementById('teamSizeSelect').value, 10) || 2;
+      const required = size - 1;
+      const m1 = document.getElementById('inputMember1').value.trim();
+      const m2 = document.getElementById('inputMember2').value.trim();
+      const m3 = document.getElementById('inputMember3').value.trim();
+      const filled = [m1, m2, m3].filter(Boolean).length;
+      if (filled < required) {
+        alert('Please fill in all ' + required + ' team member field(s).');
+        return;
+      }
       const teamName = document.getElementById('inputTeamName').value.trim();
       const leader = document.getElementById('inputTeamLeader').value.trim();
       const members = getTeamMembersStr();
