@@ -239,8 +239,11 @@
       </div>
       <div id="teamStep2" class="team-select-step" style="display: none;">
         <h3>Enter Team Leader Name</h3>
-        <p style="color: #9ca3af; margin-bottom: 20px; font-size: 0.95rem;">Enter the name of your team leader.</p>
-        <input type="text" id="inputTeamLeader" class="team-select-input" placeholder="e.g. John Doe" />
+        <p style="color: #9ca3af; margin-bottom: 20px; font-size: 0.95rem;">Type to search from the participants list.</p>
+        <div class="team-search-wrap">
+          <input type="text" id="inputTeamLeader" class="team-select-input" placeholder="Type name to search..." autocomplete="off" />
+          <div class="team-search-results" id="acLeader"></div>
+        </div>
         <div class="cyber-modal-btns" style="margin-top: 20px;">
           <button class="cyber-modal-btn" id="btnStep2Back" style="background: transparent; color: #e63946; border: 2px solid #e63946;">Back</button>
           <button class="cyber-modal-btn" id="btnStep2Next">Next</button>
@@ -248,10 +251,19 @@
       </div>
       <div id="teamStep3" class="team-select-step" style="display: none;">
         <h3>Enter Team Members</h3>
-        <p style="color: #9ca3af; margin-bottom: 20px; font-size: 0.95rem;">Enter names of your 3 team members.</p>
-        <input type="text" id="inputMember1" class="team-select-input" placeholder="Team Member 1" style="margin-bottom: 10px;" />
-        <input type="text" id="inputMember2" class="team-select-input" placeholder="Team Member 2" style="margin-bottom: 10px;" />
-        <input type="text" id="inputMember3" class="team-select-input" placeholder="Team Member 3" />
+        <p style="color: #9ca3af; margin-bottom: 20px; font-size: 0.95rem;">Type to search from the participants list.</p>
+        <div class="team-search-wrap" style="margin-bottom: 10px;">
+          <input type="text" id="inputMember1" class="team-select-input" placeholder="Team Member 1 - type to search" autocomplete="off" />
+          <div class="team-search-results" id="acMember1"></div>
+        </div>
+        <div class="team-search-wrap" style="margin-bottom: 10px;">
+          <input type="text" id="inputMember2" class="team-select-input" placeholder="Team Member 2 - type to search" autocomplete="off" />
+          <div class="team-search-results" id="acMember2"></div>
+        </div>
+        <div class="team-search-wrap">
+          <input type="text" id="inputMember3" class="team-select-input" placeholder="Team Member 3 - type to search" autocomplete="off" />
+          <div class="team-search-results" id="acMember3"></div>
+        </div>
         <div class="cyber-modal-btns" style="margin-top: 20px;">
           <button class="cyber-modal-btn" id="btnStep3Back" style="background: transparent; color: #e63946; border: 2px solid #e63946;">Back</button>
           <button class="cyber-modal-btn" id="btnStep3Next">Next</button>
@@ -362,6 +374,58 @@
       const m3 = document.getElementById('inputMember3').value.trim();
       return [m1, m2, m3].filter(Boolean).join(', ');
     }
+
+    // Participant autocomplete: fetch from admin-uploaded CSV
+    async function searchParticipants(q) {
+      if (!q || q.length < 2) return [];
+      const res = await fetch('/api/participants/search?q=' + encodeURIComponent(q), { cache: 'no-store' });
+      return await res.json();
+    }
+
+    function attachParticipantAutocomplete(inputId, resultsId) {
+      const input = document.getElementById(inputId);
+      const resultsEl = document.getElementById(resultsId);
+      let debounceTimer = null;
+      if (!input || !resultsEl) return;
+      input.addEventListener('input', () => {
+        const q = input.value.trim();
+        if (debounceTimer) clearTimeout(debounceTimer);
+        if (q.length < 2) {
+          resultsEl.innerHTML = '';
+          resultsEl.classList.remove('show');
+          return;
+        }
+        debounceTimer = setTimeout(async () => {
+          const list = await searchParticipants(q);
+          resultsEl.innerHTML = '';
+          if (list.length === 0) {
+            resultsEl.innerHTML = '<div class="team-search-item" style="cursor:default;color:#9ca3af;">No participants found.</div>';
+          } else {
+            list.forEach(p => {
+              const div = document.createElement('div');
+              div.className = 'team-search-item';
+              const name = p.participantName || p.name || '';
+              const meta = [p.college, p.regNo].filter(Boolean).join(' • ');
+              div.innerHTML = `<div class="team-name">${name}</div>${meta ? `<div class="team-meta">${meta}</div>` : ''}`;
+              div.onclick = () => {
+                input.value = name;
+                resultsEl.innerHTML = '';
+                resultsEl.classList.remove('show');
+              };
+              resultsEl.appendChild(div);
+            });
+          }
+          resultsEl.classList.add('show');
+          debounceTimer = null;
+        }, 300);
+      });
+      input.addEventListener('blur', () => setTimeout(() => resultsEl.classList.remove('show'), 200));
+    }
+
+    attachParticipantAutocomplete('inputTeamLeader', 'acLeader');
+    attachParticipantAutocomplete('inputMember1', 'acMember1');
+    attachParticipantAutocomplete('inputMember2', 'acMember2');
+    attachParticipantAutocomplete('inputMember3', 'acMember3');
 
     document.getElementById('selectProblemBtn').addEventListener('click', () => {
       resetModal();
