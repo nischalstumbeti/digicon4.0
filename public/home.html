@@ -154,9 +154,9 @@
     .criteria-item .criteria-description { color: #9ca3af; font-size: 0.9rem; margin-top: 4px; }
     .criteria-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
     .team-select-input {
-      width: 100%; padding: 12px 14px; margin-bottom: 12px;
+      width: 100%; padding: 16px 18px; margin-bottom: 14px;
       background: #1a1a1a; border: 1px solid rgba(230, 57, 70, 0.3);
-      border-radius: 4px; color: #e8e8e8; font-size: 1rem;
+      border-radius: 6px; color: #e8e8e8; font-size: 1.05rem;
       font-family: Verdana, Geneva, sans-serif;
     }
     .team-select-input:focus { outline: none; border-color: #e63946; }
@@ -179,7 +179,7 @@
     .team-search-item .team-meta { font-size: 0.85rem; color: #9ca3af; margin-top: 4px; }
     .team-details-box {
       background: #1a1a1a; border: 1px solid rgba(230, 57, 70, 0.2);
-      border-radius: 6px; padding: 16px; margin: 16px 0;
+      border-radius: 8px; padding: 24px; margin: 20px 0;
     }
     .team-details-box .row { margin: 8px 0; }
     .team-details-box .label { color: #9ca3af; font-size: 0.85rem; }
@@ -238,7 +238,7 @@
 
   <!-- Team details modal: Team name → Leader → Members → Confirm → Problem page -->
   <div class="cyber-modal" id="teamSelectModal">
-    <div class="cyber-modal-content" style="max-width: 480px;">
+    <div class="cyber-modal-content" style="max-width: 580px;">
       <div id="teamStep1" class="team-select-step">
         <h3>Enter Your Team Name</h3>
         <p style="color: #9ca3af; margin-bottom: 20px; font-size: 0.95rem;">Enter your team name as registered.</p>
@@ -494,8 +494,24 @@
         alert('Please fill in all ' + required + ' team member field(s).');
         return;
       }
-      const teamName = document.getElementById('inputTeamName').value.trim();
       const leader = document.getElementById('inputTeamLeader').value.trim();
+      const memberList = [m1, m2, m3].filter(Boolean).slice(0, required);
+      const norm = (s) => String(s || '').toLowerCase().trim();
+      const leaderNorm = norm(leader);
+      if (memberList.some(m => norm(m) === leaderNorm)) {
+        alert('Team Leader cannot be the same as a team member. No duplicate names allowed.');
+        return;
+      }
+      const seen = new Set();
+      for (const m of memberList) {
+        const n = norm(m);
+        if (seen.has(n)) {
+          alert('No duplicate members allowed. Each team member must be unique.');
+          return;
+        }
+        seen.add(n);
+      }
+      const teamName = document.getElementById('inputTeamName').value.trim();
       const members = getTeamMembersStr();
       document.getElementById('confirmTeamName').textContent = teamName || '—';
       document.getElementById('confirmTeamLeader').textContent = leader || '—';
