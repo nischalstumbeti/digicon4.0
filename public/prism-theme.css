@@ -24,6 +24,17 @@ body {
   --st-border-hover: rgba(230, 57, 70, 0.5);
 }
 
+/* Video background - site-wide */
+.bg-video {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  object-fit: cover; z-index: -2; pointer-events: none;
+  transform: scaleY(-1); /* Flip if video was recorded upside down */
+}
+.video-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.5); z-index: -1; pointer-events: none;
+}
+
 .prism-body {
   font-family: 'Barlow', Verdana, sans-serif;
   background: var(--st-bg);
