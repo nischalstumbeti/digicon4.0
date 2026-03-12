@@ -11,27 +11,27 @@
     .prism-body { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; }
     .header-logos {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 20px 32px; gap: 32px;
+      padding: 10px 20px; gap: 20px;
       border-bottom: 1px solid rgba(230, 57, 70, 0.2);
       background: rgba(10, 10, 10, 0.4);
       position: relative; z-index: 2;
     }
     .header-logos img {
-      height: 50px; width: auto; object-fit: contain;
+      height: 40px; width: auto; object-fit: contain;
       filter: brightness(0.95);
       transition: transform 0.2s;
     }
     .header-logos img:hover { transform: scale(1.02); }
-    .header-logos .header-left { display: flex; align-items: center; gap: 24px; flex: 1; }
+    .header-logos .header-left { display: flex; align-items: center; gap: 16px; flex: 1; }
     .header-logos .header-center { display: flex; justify-content: center; flex: 1; }
     .header-logos .header-right { flex: 1; display: flex; justify-content: flex-end; align-items: center; }
-    .header-logos .euphoria-banner { height: 150px; max-width: 1100px; }
-    .header-logos .header-side-logo { height: 95px; width: auto; object-fit: contain; }
+    .header-logos .euphoria-banner { height: 85px; max-width: 700px; }
+    .header-logos .header-side-logo { height: 60px; width: auto; object-fit: contain; }
     @media (max-width: 768px) {
-      .header-logos { gap: 16px; padding: 16px 20px; flex-wrap: wrap; justify-content: center; }
-      .header-logos img { height: 40px; }
-      .header-logos .euphoria-banner { height: 100px; max-width: 420px; }
-      .header-logos .header-side-logo { height: 70px; }
+      .header-logos { gap: 12px; padding: 8px 16px; flex-wrap: wrap; justify-content: center; }
+      .header-logos img { height: 32px; }
+      .header-logos .euphoria-banner { height: 60px; max-width: 320px; }
+      .header-logos .header-side-logo { height: 45px; }
     }
     .main {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
