@@ -1,0 +1,35 @@
+{
+  "name": "techfrontier-hackathon",
+  "version": "1.0.0",
+  "description": "TechFrontier 2K25 Hackathon Problem Selection System",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "start:mongo": "powershell -ExecutionPolicy Bypass -File start-with-env.ps1",
+    "start:no-db": "cross-env NO_DATABASE=1 node app.js",
+    "dev": "node app.js",
+    "build-static": "node build-static.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^7.5.1",
+    "mongodb": "^6.8.0",
+    "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "hackathon",
+    "problem-selection",
+    "nodejs",
+    "express",
+    "sqlite"
+  ],
+  "author": "TechFrontier Team",
+  "license": "MIT",
+  "devDependencies": {
+    "cross-env": "^10.1.0"
+  }
+}

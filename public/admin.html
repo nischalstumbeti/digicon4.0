@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel – TechFrontier 2K25</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="prism-theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Barlow', Verdana, sans-serif;
+            background: #0a0a0a;
+            color: #e8e8e8;
+            min-height: 100vh;
+        }
+
+        /* ── LOGIN ─────────────────────────────────────── */
+        #loginScreen {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background: #0a0a0a;
+        }
+        #loginScreen .login-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .site-footer {
+            padding: 16px 0;
+            border-top: 1px solid rgba(230, 57, 70, 0.15);
+        }
+        .login-box {
+            background: #121212;
+            border: 1px solid rgba(230, 57, 70, 0.4);
+            border-radius: 8px;
+            padding: 44px 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 0 40px rgba(230, 57, 70, 0.15);
+        }
+        .login-box h2 { color: #e63946; text-align: center; font-size: 1.8rem; margin-bottom: 28px; font-family: 'Bebas Neue', sans-serif; letter-spacing: 4px; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; margin-bottom: 7px; font-weight: 600; font-size: 0.9rem; color: #9ca3af; }
+        .form-group input {
+            width: 100%; padding: 11px 14px;
+            border: 1px solid rgba(230, 57, 70, 0.3); border-radius: 4px;
+            background: #1a1a1a; color: #e8e8e8; font-size: 1rem;
+        }
+        .form-group input:focus { outline: none; border-color: #e63946; box-shadow: 0 0 0 2px rgba(230, 57, 70, 0.2); }
+        .login-btn {
+            width: 100%; padding: 12px;
+            background: #e63946;
+            color: #fff; border: none; border-radius: 4px;
+            font-size: 1rem; font-weight: 600; font-family: 'Barlow', sans-serif;
+            cursor: pointer; transition: all .2s;
+        }
+        .login-btn:hover { background: #c1121f; box-shadow: 0 0 20px rgba(230, 57, 70, 0.4); }
+        .login-error { color: #ef4444; text-align: center; margin-top: 12px; font-size: 0.9rem; }
+
+        /* ── SHELL ──────────────────────────────────────── */
+        #shell { display: none; flex-direction: row; min-height: 100vh; }
+        #shell.visible { display: flex; }
+
+        /* ── SIDEBAR ────────────────────────────────────── */
+        .sidebar {
+            width: 230px;
+            min-width: 230px;
+            background: #121212;
+            border-right: 1px solid rgba(230, 57, 70, 0.25);
+            display: flex;
+            flex-direction: column;
+            padding-top: 0;
+        }
+        .sidebar-brand {
+            padding: 22px 20px 18px;
+            border-bottom: 1px solid rgba(230, 57, 70, 0.2);
+            text-align: center;
+        }
+        .sidebar-brand .brand-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #e63946;
+            letter-spacing: 2px;
+            font-family: 'Bebas Neue', sans-serif;
+        }
+        .sidebar-brand .brand-sub {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+        .sidebar-nav { flex: 1; padding: 18px 0; }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 22px;
+            cursor: pointer;
+            color: #9ca3af;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border-left: 3px solid transparent;
+            transition: all .2s;
+            user-select: none;
+        }
+        .nav-item:hover { background: rgba(230, 57, 70, 0.08); color: #e8e8e8; }
+        .nav-item.active { border-left-color: #e63946; background: rgba(230, 57, 70, 0.1); color: #fff; font-weight: 600; }
+        .nav-item .nav-icon { font-size: 1.1rem; width: 22px; text-align: center; }
+        .sidebar-footer {
+            padding: 16px 20px;
+            border-top: 1px solid rgba(230, 57, 70, 0.2);
+            font-size: 0.78rem;
+            color: #6b7280;
+            text-align: center;
+        }
+        .logout-btn {
+            display: block; width: 100%; padding: 9px;
+            background: transparent; color: #e63946;
+            border: 1px solid #e63946; border-radius: 4px;
+            cursor: pointer; font-size: 0.85rem; font-weight: 600;
+            margin-top: 10px; transition: all .2s;
+        }
+        .logout-btn:hover { background: rgba(230, 57, 70, 0.1); color: #fff; }
+
+        /* ── MAIN CONTENT ───────────────────────────────── */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .topbar {
+            background: #121212;
+            border-bottom: 1px solid rgba(230, 57, 70, 0.25);
+            padding: 14px 26px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .topbar-title { font-size: 1.2rem; font-weight: 600; color: #e8e8e8; font-family: 'Barlow', sans-serif; }
+        .topbar-meta { font-size: 0.78rem; color: #9ca3af; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+        .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; margin-right: 4px; }
+        .live-dot.green { background: #e63946; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        .refresh-btn {
+            background: #e63946;
+            color: #fff; border: none;
+            padding: 6px 14px; border-radius: 4px; cursor: pointer;
+            font-size: 0.78rem; font-weight: 600;
+        }
+
+        .page-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px;
+            background: #0a0a0a;
+        }
+
+        /* ── PAGES ──────────────────────────────────────── */
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* ── STATS GRID ─────────────────────────────────── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: #121212;
+            border: 1px solid rgba(230, 57, 70, 0.25);
+            border-radius: 8px;
+            padding: 20px 18px;
+            text-align: center;
+        }
+        .stat-number { font-size: 2rem; font-weight: 700; color: #e63946; }
+        .stat-label { font-size: 0.85rem; color: #9ca3af; margin-top: 4px; }
+
+        /* ── SECTIONS ───────────────────────────────────── */
+        .section {
+            background: #121212;
+            border: 1px solid rgba(230, 57, 70, 0.25);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 26px;
+        }
+        .section-header {
+            background: #1a1a1a;
+            padding: 14px 18px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #e63946;
+            border-bottom: 1px solid rgba(230, 57, 70, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .section-header-left { display: flex; align-items: center; gap: 10px; }
+        .section-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .section-body { padding: 16px 18px; background: #0a0a0a; }
+
+        /* ── TABLE ──────────────────────────────────────── */
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 520px; }
+        thead th { background: #e63946; color: #fff; padding: 11px 12px; text-align: left; font-size: 0.87rem; }
+        tbody td { padding: 10px 12px; border-bottom: 1px solid #2a2a2a; font-size: 0.88rem; vertical-align: middle; }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: rgba(230, 57, 70, 0.05); }
+        .status-available { color: #e63946; font-weight: 600; }
+        .status-full { color: #ef4444; font-weight: 700; }
+        .empty-row td { text-align: center; color: #666; padding: 22px; }
+
+        /* ── BUTTONS ────────────────────────────────────── */
+        .btn {
+            background: #e63946;
+            color: #fff; border: none; border-radius: 4px;
+            padding: 8px 16px; cursor: pointer;
+            font-size: 0.83rem; font-weight: 600;
+            transition: all .2s; white-space: nowrap;
+        }
+        .btn:hover { background: #c1121f; box-shadow: 0 0 20px rgba(230, 57, 70, 0.3); }
+        .btn-sm { padding: 5px 10px; font-size: 0.78rem; }
+        .btn-danger { background: #ef4444; border-color: #ef4444; }
+        .btn-danger:hover { background: #dc2626; border-color: #dc2626; }
+        .btn-outline { background: transparent; color: #e63946; border: 1px solid #e63946; }
+        .btn-outline:hover { background: rgba(230, 57, 70, 0.1); color: #fff; }
+        .btn-teal { background: #e63946; border-color: #e63946; }
+        .btn-teal:hover { background: #c1121f; border-color: #c1121f; }
+
+        /* ── ADD PROBLEM PAGE ───────────────────────────── */
+        .add-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 22px;
+            margin-bottom: 30px;
+        }
+        .add-option-card {
+            background: #121212;
+            border: 1px solid rgba(230, 57, 70, 0.25);
+            border-radius: 8px;
+            padding: 28px 24px;
+            cursor: pointer;
+            transition: all .2s;
+            text-align: center;
+        }
+        .add-option-card:hover, .add-option-card.selected {
+            border-color: #e63946;
+            background: rgba(230, 57, 70, 0.05);
+        }
+        .add-option-card .option-icon { font-size: 2.4rem; margin-bottom: 12px; }
+        .add-option-card .option-title { font-size: 1.1rem; font-weight: 600; color: #e8e8e8; margin-bottom: 8px; }
+        .add-option-card .option-desc { font-size: 0.85rem; color: #9ca3af; line-height: 1.5; }
+
+        /* ── FORM ───────────────────────────────────────── */
+        .form-panel {
+            background: #121212;
+            border: 1px solid rgba(230, 57, 70, 0.25);
+            border-radius: 8px;
+            padding: 28px;
+            display: none;
+        }
+        .form-panel.visible { display: block; }
+        .form-panel h3 { color: #e63946; font-size: 1.1rem; margin-bottom: 22px; border-bottom: 1px solid rgba(230, 57, 70, 0.2); padding-bottom: 12px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+        .form-row.full { grid-template-columns: 1fr; }
+        .field label { display: block; margin-bottom: 6px; font-size: 0.85rem; font-weight: 600; color: #9ca3af; }
+        .field input, .field textarea, .field select {
+            width: 100%; padding: 10px 13px;
+            background: #1a1a1a; border: 1px solid rgba(230, 57, 70, 0.3);
+            border-radius: 4px; color: #e8e8e8; font-size: 0.92rem;
+            font-family: inherit;
+        }
+        .field input:focus, .field textarea:focus, .field select:focus {
+            outline: none; border-color: #e63946;
+            box-shadow: 0 0 0 2px rgba(230, 57, 70, 0.2);
+        }
+        .field textarea { resize: vertical; min-height: 90px; }
+        .field .hint { font-size: 0.76rem; color: #64748b; margin-top: 4px; }
+        .form-actions { display: flex; gap: 12px; margin-top: 24px; }
+
+        /* ── CSV PANEL ──────────────────────────────────── */
+        .csv-drop-area {
+            border: 2px dashed rgba(230, 57, 70, 0.4);
+            border-radius: 8px;
+            padding: 36px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+            background: #1a1a1a;
+            margin-bottom: 18px;
+        }
+        .csv-drop-area:hover, .csv-drop-area.drag-over {
+            border-color: #e63946;
+            background: rgba(230, 57, 70, 0.05);
+        }
+        .csv-drop-area .drop-icon { font-size: 2.5rem; margin-bottom: 10px; }
+        .csv-drop-area p { color: #9ca3af; font-size: 0.9rem; line-height: 1.6; }
+        .csv-drop-area strong { color: #e63946; }
+        #csvFileInput { display: none; }
+        .csv-preview {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 0.82rem;
+            color: #aaa;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 14px;
+            display: none;
+        }
+        .csv-template {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 7px;
+            padding: 12px 14px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #aaa;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* ── NOTIFICATION ───────────────────────────────── */
+        #notification {
+            position: fixed; top: 20px; right: 22px;
+            background: #e63946; color: #fff;
+            padding: 11px 22px; border-radius: 4px;
+            font-size: 0.92rem;
+            z-index: 9999; display: none;
+        }
+        #notification.show { display: block; animation: slideIn .3s ease; }
+        #notification.error { background: #ef4444; }
+        @keyframes slideIn { from{transform:translateX(110%);opacity:0} to{transform:translateX(0);opacity:1} }
+
+        /* ── CONFIRM MODAL ───────────────────────────────── */
+        .confirm-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 10000; opacity: 0; visibility: hidden; transition: all .25s;
+        }
+        .confirm-overlay.show { opacity: 1; visibility: visible; }
+        .confirm-modal {
+            background: #121212;
+            border: 1px solid rgba(230, 57, 70, 0.4);
+            border-radius: 8px;
+            padding: 28px 32px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 0 40px rgba(230, 57, 70, 0.2);
+        }
+        .confirm-modal h3 { color: #e63946; margin-bottom: 14px; font-size: 1.2rem; }
+        .confirm-modal p { color: #9ca3af; margin-bottom: 22px; line-height: 1.5; font-size: 0.95rem; }
+        .confirm-modal .confirm-btns { display: flex; gap: 12px; justify-content: flex-end; }
+        .confirm-modal .btn-confirm {
+            background: #e63946;
+            color: #fff; border: none; padding: 10px 24px;
+            border-radius: 4px; font-weight: 600; cursor: pointer;
+        }
+        .confirm-modal .btn-cancel {
+            background: transparent; color: #9ca3af;
+            border: 1px solid #4b5563; padding: 10px 24px;
+            border-radius: 4px; font-weight: 600; cursor: pointer;
+        }
+        .confirm-modal .btn-cancel:hover { border-color: #e63946; color: #e8e8e8; }
+
+        /* ── LOADING ────────────────────────────────────── */
+        .loading-text { color: #666; padding: 20px; text-align: center; font-size: 0.9rem; }
+
+        /* ── RESPONSIVE ─────────────────────────────────── */
+        @media (max-width: 768px) {
+            .sidebar { width: 60px; min-width: 60px; }
+            .sidebar-brand .brand-title, .sidebar-brand .brand-sub,
+            .nav-item span, .sidebar-footer { display: none; }
+            .nav-item { padding: 14px; justify-content: center; }
+            .nav-item .nav-icon { width: auto; }
+            .page-content { padding: 16px; }
+            .form-row { grid-template-columns: 1fr; }
+            .topbar { padding: 12px 16px; }
+        }
+    </style>
+</head>
+<body class="prism-body">
+
+<!-- ── LOGIN SCREEN ── -->
+<div id="loginScreen">
+    <div class="login-wrapper">
+    <div class="login-box">
+        <h2>🔐 Admin Login</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="login-btn">Login</button>
+            <div id="loginError" class="login-error"></div>
+        </form>
+    </div>
+    </div>
+    <footer class="site-footer">
+        <div class="footer-marquee">
+            <span class="footer-marquee-inner">DESIGNED AND DEVELOPED WITH ♥, KARE ACM SIGBED STUDENT CHAPTER &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; DESIGNED AND DEVELOPED WITH ♥, KARE ACM SIGBED STUDENT CHAPTER</span>
+        </div>
+    </footer>
+</div>
+
+<!-- ── MAIN SHELL ── -->
+<div id="shell">
+    <div id="serverWarningBanner" style="display:none;background:#c10016;color:#fff;padding:12px 20px;text-align:center;font-weight:600;">
+        Wrong server — You must open this page via the Node server. Close this tab and open <a href="http://localhost:3000/admin" target="_blank" rel="noopener" style="color:#fff;text-decoration:underline;">http://localhost:3000/admin</a> (ensure the server is running with <code style="background:rgba(0,0,0,0.3);padding:2px 6px;">npm start</code>).
+    </div>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <!-- Header area - add your fresh header here -->
+        <nav class="sidebar-nav">
+            <div class="nav-item active" data-page="home" onclick="navigateTo('home')">
+                <span class="nav-icon">🏠</span>
+                <span>Home</span>
+            </div>
+            <div class="nav-item" data-page="add-problems" onclick="navigateTo('add-problems')">
+                <span class="nav-icon">➕</span>
+                <span>Add Problem Statements</span>
+            </div>
+            <div class="nav-item" data-page="add-teams" onclick="navigateTo('add-teams')">
+                <span class="nav-icon">👥</span>
+                <span>Add Participants</span>
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <div>Cybernerds × OWASP</div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="main">
+        <!-- Header area - add your fresh header here -->
+
+        <!-- Pages -->
+        <div class="page-content">
+
+            <!-- HOME PAGE -->
+            <div class="page active" id="page-home">
+
+                <!-- Release Problem Statement -->
+                <div class="section" style="margin-bottom: 24px; border: 1px solid rgba(230, 57, 70, 0.4);">
+                    <div class="section-header">
+                        <div class="section-header-left">Problem Statement Page</div>
+                        <div class="section-header-actions">
+                            <span id="releaseStatus" style="font-size: 0.9rem; color: #94a3b8; margin-right: 12px;">Status: <strong id="releaseStatusText">—</strong></span>
+                            <button class="btn btn-teal" id="releaseBtn" onclick="toggleProblemStatementRelease()">Release Problem Statement</button>
+                        </div>
+                    </div>
+                    <div class="section-body" style="padding: 12px 18px; font-size: 0.9rem; color: #94a3b8;">
+                        When released, the problem selection page is visible to participants. When blocked, they see a message to wait.
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="statProblems">—</div>
+                        <div class="stat-label">Problem Statements</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="statRegistrations">—</div>
+                        <div class="stat-label">Total Registrations</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="statAvailable">—</div>
+                        <div class="stat-label">Available Problems</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="statFull">—</div>
+                        <div class="stat-label">Full Problems</div>
+                    </div>
+                </div>
+
+                <!-- Problem Statements -->
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-header-left">📋 Problem Statements</div>
+                        <div class="section-header-actions">
+                            <button class="btn btn-outline btn-sm" onclick="exportData('problem-statements','pdf')">📄 Export PDF</button>
+                            <button class="btn btn-teal btn-sm" onclick="exportData('all','pdf')">📦 Export All</button>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div id="problemsLoading" class="loading-text">Loading problem statements…</div>
+                        <div id="problemsTable" style="display:none;">
+                            <div class="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Title</th>
+                                            <th>Category</th>
+                                            <th>Difficulty</th>
+                                            <th>Teams</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="problemsBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Registrations -->
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-header-left">👥 Registrations</div>
+                        <div class="section-header-actions">
+                            <button class="btn btn-outline btn-sm" onclick="exportData('registrations','pdf')">📄 Export PDF</button>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div id="registrationsLoading" class="loading-text">Loading registrations…</div>
+                        <div id="registrationsTable" style="display:none;">
+                            <div class="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Team #</th>
+                                            <th>Team Name</th>
+                                            <th>Team Leader</th>
+                                            <th>Team Members</th>
+                                            <th>Problem Statement</th>
+                                            <th>Registered At</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="registrationsBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /page-home -->
+
+            <!-- ADD PROBLEM STATEMENTS PAGE -->
+            <div class="page" id="page-add-problems">
+
+                <div class="add-options">
+                    <div class="add-option-card" id="optManual" onclick="selectAddOption('manual')">
+                        <div class="option-icon">✍️</div>
+                        <div class="option-title">Add Manually</div>
+                        <div class="option-desc">Fill in a form to add a single problem statement with all its details.</div>
+                    </div>
+                    <div class="add-option-card" id="optCsv" onclick="selectAddOption('csv')">
+                        <div class="option-icon">📂</div>
+                        <div class="option-title">Add Using CSV File</div>
+                        <div class="option-desc">Upload a CSV file to bulk-import multiple problem statements at once.</div>
+                    </div>
+                </div>
+
+                <!-- Manual Form -->
+                <div class="form-panel" id="manualForm">
+                    <h3>✍️ Add Problem Statement Manually</h3>
+                    <form id="addPsForm" onsubmit="submitManualForm(event)">
+                        <div class="form-row">
+                            <div class="field">
+                                <label>Problem ID *</label>
+                                <input type="text" id="psId" placeholder="e.g. ps001" required>
+                                <div class="hint">Unique identifier (no spaces)</div>
+                            </div>
+                            <div class="field">
+                                <label>Max Teams Allowed</label>
+                                <input type="number" id="psMax" value="2" min="1" max="50">
+                            </div>
+                        </div>
+                        <div class="form-row full">
+                            <div class="field">
+                                <label>Title *</label>
+                                <input type="text" id="psTitle" placeholder="e.g. Ransomware Detection System" required>
+                            </div>
+                        </div>
+                        <div class="form-row full">
+                            <div class="field">
+                                <label>Description *</label>
+                                <textarea id="psDesc" placeholder="Detailed description of the problem statement…" required></textarea>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="field">
+                                <label>Category</label>
+                                <select id="psCategory">
+                                    <option value="">— Select Category —</option>
+                                    <option>Cybersecurity</option>
+                                    <option>Artificial Intelligence</option>
+                                    <option>Blockchain</option>
+                                    <option>Mobile</option>
+                                    <option>IoT</option>
+                                    <option>Enterprise / Full-Stack</option>
+                                    <option>API / Backend</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Difficulty</label>
+                                <select id="psDifficulty">
+                                    <option value="">— Select Difficulty —</option>
+                                    <option>Beginner</option>
+                                    <option>Intermediate</option>
+                                    <option>Advanced</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row full">
+                            <div class="field">
+                                <label>Technologies</label>
+                                <input type="text" id="psTech" placeholder="e.g. Node.js, React, MongoDB">
+                                <div class="hint">Comma-separated list</div>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn">➕ Add Problem Statement</button>
+                            <button type="button" class="btn btn-outline" onclick="resetManualForm()">🔄 Clear</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- CSV Form -->
+                <div class="form-panel" id="csvForm">
+                    <h3>📂 Import Problem Statements via CSV</h3>
+
+                    <div class="csv-drop-area" id="csvDropArea" onclick="document.getElementById('csvFileInput').click()">
+                        <div class="drop-icon">📁</div>
+                        <p>Click to choose a CSV file<br><strong>or drag &amp; drop it here</strong></p>
+                        <p style="margin-top:8px;font-size:0.78rem;color:#666;">Accepts .csv files only</p>
+                    </div>
+                    <input type="file" id="csvFileInput" accept=".csv" onchange="handleCsvFile(event)">
+
+                    <div id="csvPreview" class="csv-preview"></div>
+                    <div id="csvActions" style="display:none; margin-bottom:18px;">
+                        <span id="csvRowCount" style="color:#aaa;font-size:0.88rem;"></span>
+                        <button class="btn" style="margin-left:14px;" onclick="importCsvData()">📥 Import Now</button>
+                        <button class="btn btn-outline" style="margin-left:8px;" onclick="clearCsv()">✖ Clear</button>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <div style="font-size:0.85rem;color:#aaa;margin-bottom:8px;font-weight:600;">📄 Expected CSV Format:</div>
+                        <div class="csv-template">id,title,description,category,difficulty,technologies,maxSelections
+ps001,"Ransomware Detection","Detect and prevent ransomware attacks in real-time.",Cybersecurity,Advanced,"Python,ML",2
+ps002,"NFT Marketplace","Build a secure NFT trading platform.",Blockchain,Intermediate,"Solidity,React",2</div>
+                        <div style="margin-top:10px;font-size:0.8rem;color:#666;">
+                            • <strong style="color:#aaa;">id</strong>, <strong style="color:#aaa;">title</strong>, and <strong style="color:#aaa;">description</strong> are required.<br>
+                            • <strong style="color:#aaa;">technologies</strong> can be a comma-separated string inside quotes.<br>
+                            • <strong style="color:#aaa;">maxSelections</strong> defaults to 2 if omitted.
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /page-add-problems -->
+
+            <!-- ADD PARTICIPANTS PAGE -->
+            <div class="page" id="page-add-teams">
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-header-left">📋 Add Participants via CSV</div>
+                    </div>
+                    <div class="section-body">
+                        <p style="color:#aaa;margin-bottom:20px;font-size:0.9rem;">
+                            Upload a CSV of participants. When users enter their name on the home page, they will fetch their details from this list.
+                            <strong style="color:#e63946;">Uploading replaces all existing participants.</strong>
+                        </p>
+                        <div class="csv-drop-area" id="participantsCsvDropArea" onclick="document.getElementById('participantsCsvFileInput').click()">
+                            <div class="drop-icon">📁</div>
+                            <p>Click to choose a CSV file<br><strong>or drag &amp; drop it here</strong></p>
+                            <p style="margin-top:8px;font-size:0.78rem;color:#666;">Accepts .csv files only</p>
+                        </div>
+                        <input type="file" id="participantsCsvFileInput" accept=".csv" onchange="handleParticipantsCsvFile(event)">
+                        <div id="participantsCsvPreview" class="csv-preview"></div>
+                        <div id="participantsCsvActions" style="display:none; margin-bottom:18px;">
+                            <span id="participantsCsvRowCount" style="color:#aaa;font-size:0.88rem;"></span>
+                            <button class="btn" style="margin-left:14px;" onclick="uploadParticipantsCsv()">📥 Upload Participants</button>
+                            <button class="btn btn-outline" style="margin-left:8px;" onclick="clearParticipantsCsv()">✖ Clear</button>
+                        </div>
+                        <div style="margin-top: 24px;">
+                            <div style="font-size:0.85rem;color:#aaa;margin-bottom:8px;font-weight:600;">📄 CSV Format:</div>
+                            <div class="csv-template">NAME,REG NO,COLLEGE,CITY,EMAIL,PHN NO,DEPT,GENDER,YEAR
+John Doe,21CS001,KARE,Chennai,john@mail.com,9876543210,CSE,M,3
+Jane Smith,21CS002,KARE,Madurai,jane@mail.com,9876543211,CSE,F,3</div>
+                            <div style="margin-top:6px;font-size:0.78rem;color:#888;">Extra columns allowed and will be accepted.</div>
+                            <div style="margin-top:10px;font-size:0.8rem;color:#666;">
+                                • Header: <strong style="color:#aaa;">NAME, REG NO, COLLEGE, CITY, EMAIL, PHN NO, DEPT, GENDER, YEAR</strong><br>
+                                • One row per participant. Users type their name on the home page to fetch their details.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Participant list below upload -->
+                <div class="section" style="margin-top: 24px;">
+                    <div class="section-header">
+                        <div class="section-header-left">👥 Participant List</div>
+                        <div class="section-header-actions">
+                            <span id="participantsListCount" style="font-size: 0.9rem; color: #94a3b8;">—</span>
+                            <button class="btn btn-outline" style="margin-left: 8px;" onclick="loadParticipantsList()">🔄 Refresh</button>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div id="participantsListLoading" class="loading-text">Loading participants…</div>
+                        <div id="participantsListTable" style="display:none;">
+                            <div class="table-wrap" style="max-height: 400px; overflow-y: auto;">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Name</th>
+                                            <th>Reg No</th>
+                                            <th>College</th>
+                                            <th>City</th>
+                                            <th>Email</th>
+                                            <th>Dept</th>
+                                            <th>Year</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="participantsListBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="participantsListEmpty" style="display:none; padding: 24px; text-align: center; color: #666;">
+                            No participants yet. Upload a CSV above to add participants.
+                        </div>
+                    </div>
+                </div>
+            </div><!-- /page-add-teams -->
+
+        </div><!-- /page-content -->
+        <footer class="site-footer">
+            <div class="footer-marquee">
+                <span class="footer-marquee-inner">DESIGNED AND DEVELOPED WITH ♥, KARE ACM SIGBED STUDENT CHAPTER &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; DESIGNED AND DEVELOPED WITH ♥, KARE ACM SIGBED STUDENT CHAPTER</span>
+            </div>
+        </footer>
+    </div><!-- /main -->
+</div><!-- /shell -->
+
+<div id="notification"></div>
+
+<div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-modal">
+        <h3 id="confirmTitle">Confirm</h3>
+        <p id="confirmMessage"></p>
+        <div class="confirm-btns">
+            <button class="btn-cancel" id="confirmCancel">Cancel</button>
+            <button class="btn-confirm" id="confirmOk">Delete</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ── AUTH ──────────────────────────────────────────────── */
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const user = document.getElementById('username').value.trim();
+    const pass = document.getElementById('password').value.trim();
+    if (user === 'guest' && pass === 'iamkarthikeyen@007') {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('shell').classList.add('visible');
+        init();
+    } else {
+        document.getElementById('loginError').textContent = 'Invalid username or password';
+    }
+});
+
+function logout() {
+    document.getElementById('shell').classList.remove('visible');
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+}
+
+/* ── NAVIGATION ────────────────────────────────────────── */
+const pageTitles = { home: 'Home', 'add-problems': 'Add Problem Statements', 'add-teams': 'Add Teams' };
+
+function navigateTo(page) {
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    document.querySelector(`[data-page="${page}"]`).classList.add('active');
+    document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    const t = document.getElementById('topbarTitle'); if (t) t.textContent = pageTitles[page] || page;
+    if (page === 'home') fetchData();
+    if (page === 'add-teams') loadParticipantsList();
+}
+
+/* ── ADD OPTION SELECTION ─────────────────────────────── */
+function selectAddOption(type) {
+    document.querySelectorAll('.add-option-card').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('visible'));
+    if (type === 'manual') {
+        document.getElementById('optManual').classList.add('selected');
+        document.getElementById('manualForm').classList.add('visible');
+    } else {
+        document.getElementById('optCsv').classList.add('selected');
+        document.getElementById('csvForm').classList.add('visible');
+    }
+}
+
+/* ── NOTIFICATION ──────────────────────────────────────── */
+function showNotification(msg, isError = false) {
+    const el = document.getElementById('notification');
+    el.textContent = msg;
+    el.className = 'show' + (isError ? ' error' : '');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.className = '', 3500);
+}
+
+/* ── DATA FETCHING ─────────────────────────────────────── */
+async function fetchData() {
+    try {
+        const [pRes, rRes, releaseRes] = await Promise.all([
+            fetch('/api/problem-statements', { cache: 'no-store' }),
+            fetch('/api/registrations', { cache: 'no-store' }),
+            fetch('/api/problem-statement-released', { cache: 'no-store' })
+        ]);
+        const problems = await pRes.json();
+        const registrations = await rRes.json();
+        let released = false;
+        try {
+            const releaseData = await releaseRes.json();
+            released = releaseData.released === true;
+        } catch (_) {}
+        renderStats(problems, registrations);
+        renderProblems(problems);
+        renderRegistrations(registrations);
+        updateReleaseUI(released);
+        const u = document.getElementById('updateTime'); if (u) u.textContent = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
+    } catch (err) {
+        showNotification('Failed to load data: ' + err.message, true);
+    }
+}
+
+function updateReleaseUI(released) {
+    const btn = document.getElementById('releaseBtn');
+    const statusEl = document.getElementById('releaseStatusText');
+    if (!btn || !statusEl) return;
+    if (released) {
+        btn.textContent = 'Block Problem Statement';
+        btn.className = 'btn btn-danger';
+        statusEl.textContent = 'Released';
+        statusEl.style.color = '#e63946';
+    } else {
+        btn.textContent = 'Release Problem Statement';
+        btn.className = 'btn btn-teal';
+        statusEl.textContent = 'Blocked';
+        statusEl.style.color = '#ef4444';
+    }
+}
+
+async function toggleProblemStatementRelease() {
+    try {
+        const res = await fetch('/api/admin/problem-statement-release', {
+            method: 'POST',
+            cache: 'no-store',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: '{}'
+        });
+        const text = await res.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            throw new Error('Server returned invalid response. Ensure the server is running and MongoDB is connected.');
+        }
+        if (!res.ok) throw new Error(data.error || res.statusText);
+        updateReleaseUI(data.released);
+        showNotification(data.released ? 'Problem statement page is now visible to participants.' : 'Problem statement page is now blocked.');
+    } catch (err) {
+        showNotification('Failed to toggle: ' + err.message, true);
+    }
+}
+
+function renderStats(problems, registrations) {
+    const avail = problems.filter(p => p.isAvailable).length;
+    document.getElementById('statProblems').textContent = problems.length;
+    document.getElementById('statRegistrations').textContent = registrations.length;
+    document.getElementById('statAvailable').textContent = avail;
+    document.getElementById('statFull').textContent = problems.length - avail;
+}
+
+function renderProblems(problems) {
+    problems.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    const tbody = document.getElementById('problemsBody');
+    tbody.innerHTML = '';
+    if (problems.length === 0) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No problem statements added yet. Go to "Add Problem Statements" to add some.</td></tr>';
+    } else {
+        problems.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${p.id}</td>
+                <td>${p.title}</td>
+                <td>${p.category || '—'}</td>
+                <td>${p.difficulty || '—'}</td>
+                <td>${p.selectedCount}/${p.maxSelections}</td>
+                <td class="${p.isAvailable ? 'status-available' : 'status-full'}">${p.isAvailable ? '✅ Available' : '❌ Full'}</td>
+                <td><button class="btn btn-danger btn-sm" onclick="deleteProblem('${p.id}', '${p.title.replace(/'/g,"\\'")}')">🗑 Delete</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+    document.getElementById('problemsLoading').style.display = 'none';
+    document.getElementById('problemsTable').style.display = 'block';
+}
+
+function renderRegistrations(registrations) {
+    registrations.sort((a, b) => {
+        const na = parseInt(a.team_number, 10), nb = parseInt(b.team_number, 10);
+        return (!isNaN(na) && !isNaN(nb)) ? na - nb : String(a.team_number).localeCompare(String(b.team_number));
+    });
+    const tbody = document.getElementById('registrationsBody');
+    tbody.innerHTML = '';
+    if (registrations.length === 0) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No registrations yet.</td></tr>';
+    } else {
+        registrations.forEach(r => {
+            const tr = document.createElement('tr');
+            const teamMembers = (r.team_members || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            tr.innerHTML = `
+                <td>${r.team_number}</td>
+                <td>${r.team_name || ''}</td>
+                <td>${r.team_leader || ''}</td>
+                <td>${teamMembers || '—'}</td>
+                <td>${r.problem_title || ''}</td>
+                <td>${new Date(r.registration_date_time).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true })} IST</td>
+                <td><button class="btn btn-danger btn-sm" onclick="deleteRegistration('${r.team_number}')">🗑 Delete</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+    document.getElementById('registrationsLoading').style.display = 'none';
+    document.getElementById('registrationsTable').style.display = 'block';
+}
+
+/* ── CONFIRM MODAL ─────────────────────────────────────── */
+function showConfirmModal(title, message, onConfirm, onCancel) {
+    const overlay = document.getElementById('confirmOverlay');
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMessage').textContent = message;
+    overlay.classList.add('show');
+    const cleanup = () => {
+        overlay.classList.remove('show');
+        document.getElementById('confirmOk').onclick = null;
+        document.getElementById('confirmCancel').onclick = null;
+    };
+    document.getElementById('confirmOk').onclick = () => { cleanup(); if (onConfirm) onConfirm(); };
+    document.getElementById('confirmCancel').onclick = () => { cleanup(); if (onCancel) onCancel(); };
+}
+
+/* ── DELETE PROBLEM ────────────────────────────────────── */
+async function deleteProblem(id, title) {
+    showConfirmModal(
+        'Confirm Delete',
+        `Are you sure you want to delete "${title}"? This will also remove all related registrations.`,
+        async () => {
+            try {
+                const res = await fetch(`/api/problem-statements/${encodeURIComponent(id)}`, { method: 'DELETE', cache: 'no-store' });
+                if (!res.ok) { const e = await res.json(); throw new Error(e.error || res.statusText); }
+                showNotification(`Deleted: ${title}`);
+                fetchData();
+            } catch (err) { showNotification('Delete failed: ' + err.message, true); }
+        }
+    );
+}
+
+/* ── DELETE REGISTRATION ───────────────────────────────── */
+const deletingTeams = new Set();
+async function deleteRegistration(teamNumber) {
+    if (!confirm(`Delete registration for team ${teamNumber}?`)) return;
+    if (deletingTeams.has(String(teamNumber))) return;
+    deletingTeams.add(String(teamNumber));
+    try {
+        const res = await fetch(`/api/registration/${teamNumber}`, { method: 'DELETE', cache: 'no-store' });
+        if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+        showNotification(`Deleted registration: Team ${teamNumber}`);
+        fetchData();
+    } catch (err) { showNotification('Error: ' + err.message, true); }
+    finally { deletingTeams.delete(String(teamNumber)); }
+}
+
+/* ── EXPORT ────────────────────────────────────────────── */
+function exportData(type, format) {
+    const a = document.createElement('a');
+    a.href = `/api/export/${type}/${format}`;
+    a.download = `${type}.${format}`;
+    a.click();
+}
+
+/* ── MANUAL FORM ───────────────────────────────────────── */
+async function submitManualForm(e) {
+    e.preventDefault();
+    const payload = {
+        id: document.getElementById('psId').value.trim(),
+        title: document.getElementById('psTitle').value.trim(),
+        description: document.getElementById('psDesc').value.trim(),
+        category: document.getElementById('psCategory').value || null,
+        difficulty: document.getElementById('psDifficulty').value || null,
+        technologies: document.getElementById('psTech').value.split(',').map(t => t.trim()).filter(Boolean),
+        maxSelections: parseInt(document.getElementById('psMax').value, 10) || 2
+    };
+    try {
+        const res = await fetch('/api/problem-statements', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || res.statusText);
+        showNotification(`✅ Added: ${payload.title}`);
+        resetManualForm();
+    } catch (err) { showNotification('Error: ' + err.message, true); }
+}
+
+function resetManualForm() {
+    document.getElementById('addPsForm').reset();
+}
+
+/* ── CSV HANDLING ──────────────────────────────────────── */
+let parsedCsvRows = [];
+
+document.getElementById('csvDropArea').addEventListener('dragover', e => {
+    e.preventDefault();
+    document.getElementById('csvDropArea').classList.add('drag-over');
+});
+document.getElementById('csvDropArea').addEventListener('dragleave', () => {
+    document.getElementById('csvDropArea').classList.remove('drag-over');
+});
+document.getElementById('csvDropArea').addEventListener('drop', e => {
+    e.preventDefault();
+    document.getElementById('csvDropArea').classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) processCsvFile(file);
+});
+
+function handleCsvFile(e) {
+    const file = e.target.files[0];
+    if (file) processCsvFile(file);
+}
+
+function processCsvFile(file) {
+    if (!file.name.endsWith('.csv')) {
+        showNotification('Please upload a .csv file', true);
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const text = e.target.result;
+        parsedCsvRows = parseCSV(text);
+        const preview = document.getElementById('csvPreview');
+        const actions = document.getElementById('csvActions');
+        const count = document.getElementById('csvRowCount');
+        if (parsedCsvRows.length === 0) {
+            showNotification('No valid rows found in CSV.', true);
+            return;
+        }
+        preview.style.display = 'block';
+        preview.innerHTML = parsedCsvRows.slice(0, 5).map(r =>
+            `<div style="padding:3px 0;border-bottom:1px solid #222;">[${r.id}] <strong style="color:#ededed">${r.title}</strong> — ${r.category || 'No category'}</div>`
+        ).join('') + (parsedCsvRows.length > 5 ? `<div style="color:#666;padding:4px 0;">…and ${parsedCsvRows.length - 5} more rows</div>` : '');
+        count.textContent = `${parsedCsvRows.length} problem statement(s) ready to import`;
+        actions.style.display = 'flex';
+        actions.style.alignItems = 'center';
+    };
+    reader.readAsText(file);
+}
+
+function parseCSV(text) {
+    const lines = text.trim().split(/\r?\n/);
+    if (lines.length < 2) return [];
+    const headers = splitCSVLine(lines[0]).map(h => h.trim().toLowerCase());
+    const rows = [];
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        const vals = splitCSVLine(line);
+        const obj = {};
+        headers.forEach((h, idx) => { obj[h] = (vals[idx] || '').trim(); });
+        if (!obj.id || !obj.title || !obj.description) continue;
+        rows.push({
+            id: obj.id,
+            title: obj.title,
+            description: obj.description,
+            category: obj.category || null,
+            difficulty: obj.difficulty || null,
+            technologies: obj.technologies ? obj.technologies.split(',').map(t => t.trim()).filter(Boolean) : [],
+            maxSelections: parseInt(obj.maxselections || obj.max_selections || '2', 10) || 2
+        });
+    }
+    return rows;
+}
+
+function splitCSVLine(line) {
+    const result = [];
+    let cur = '', inQuote = false;
+    for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') { inQuote = !inQuote; }
+        else if (ch === ',' && !inQuote) { result.push(cur); cur = ''; }
+        else { cur += ch; }
+    }
+    result.push(cur);
+    return result;
+}
+
+async function importCsvData() {
+    if (parsedCsvRows.length === 0) { showNotification('Nothing to import.', true); return; }
+    try {
+        const res = await fetch('/api/problem-statements/bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: parsedCsvRows })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || res.statusText);
+        showNotification(`✅ Imported ${data.added} problem(s). Skipped: ${data.skipped}`);
+        clearCsv();
+    } catch (err) { showNotification('Import failed: ' + err.message, true); }
+}
+
+function clearCsv() {
+    parsedCsvRows = [];
+    document.getElementById('csvPreview').style.display = 'none';
+    document.getElementById('csvPreview').innerHTML = '';
+    document.getElementById('csvActions').style.display = 'none';
+    document.getElementById('csvFileInput').value = '';
+}
+
+/* ── ADD PARTICIPANTS CSV ────────────────────────────────── */
+let participantsCsvContent = '';
+
+document.getElementById('participantsCsvDropArea').addEventListener('dragover', e => {
+    e.preventDefault();
+    document.getElementById('participantsCsvDropArea').classList.add('drag-over');
+});
+document.getElementById('participantsCsvDropArea').addEventListener('dragleave', () => {
+    document.getElementById('participantsCsvDropArea').classList.remove('drag-over');
+});
+document.getElementById('participantsCsvDropArea').addEventListener('drop', e => {
+    e.preventDefault();
+    document.getElementById('participantsCsvDropArea').classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) processParticipantsCsvFile(file);
+});
+
+function handleParticipantsCsvFile(e) {
+    const file = e.target.files[0];
+    if (file) processParticipantsCsvFile(file);
+}
+
+function processParticipantsCsvFile(file) {
+    if (!file.name.endsWith('.csv')) {
+        showNotification('Please upload a .csv file', true);
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const text = e.target.result;
+        const lines = text.trim().split(/\r?\n/).filter(Boolean);
+        // Skip title rows (e.g. "DIGICON 4.0 FINAL PARTCIPANTS LIST") until we find header with NAME, REG NO
+        let headerIdx = -1;
+        for (let i = 0; i < lines.length; i++) {
+            const h = (lines[i] || '').trim().toLowerCase();
+            if (h.includes('name') && h.includes('reg no')) {
+                headerIdx = i;
+                break;
+            }
+        }
+        if (headerIdx < 0) {
+            showNotification('CSV must have a header row with NAME and REG NO columns', true);
+            return;
+        }
+        participantsCsvContent = text.trim();
+        const rowCount = lines.length - headerIdx - 1;
+        const preview = document.getElementById('participantsCsvPreview');
+        const actions = document.getElementById('participantsCsvActions');
+        const countEl = document.getElementById('participantsCsvRowCount');
+        preview.style.display = 'block';
+        preview.innerHTML = lines.slice(headerIdx + 1, headerIdx + 6).map(l => {
+            const p = l.split(',');
+            return `<div style="padding:3px 0;border-bottom:1px solid #222;">${p[0] || ''} (${p[1] || ''})</div>`;
+        }).join('') + (rowCount > 5 ? `<div style="color:#666;padding:4px 0;">…and ${rowCount - 5} more</div>` : '');
+        countEl.textContent = `${rowCount} participant(s) ready to upload`;
+        actions.style.display = 'flex';
+        actions.style.alignItems = 'center';
+    };
+    reader.readAsText(file);
+}
+
+async function uploadParticipantsCsv() {
+    if (!participantsCsvContent) { showNotification('No CSV loaded.', true); return; }
+    try {
+        const res = await fetch('/api/admin/participants/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ csv: participantsCsvContent }),
+            credentials: 'same-origin'
+        });
+        const text = await res.text();
+        const isHtml = /^\s*</.test(text) || text.includes('<!DOCTYPE') || text.includes('<html');
+        if (isHtml) {
+            throw new Error('Server returned HTML instead of JSON. Open the admin page via the Node server (e.g. http://localhost:3000/admin) and ensure the server is running (npm start).');
+        }
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (_) {
+            throw new Error('Invalid server response. Ensure you are using http://localhost:3000 (or your server port), not a static file server.');
+        }
+        if (!res.ok) throw new Error(data?.error || res.statusText);
+        showNotification(`✅ Saved ${data.participantsCount} participant(s)`);
+        clearParticipantsCsv();
+        loadParticipantsList();
+    } catch (err) { showNotification('Upload failed: ' + err.message, true); }
+}
+
+function clearParticipantsCsv() {
+    participantsCsvContent = '';
+    document.getElementById('participantsCsvPreview').style.display = 'none';
+    document.getElementById('participantsCsvPreview').innerHTML = '';
+    document.getElementById('participantsCsvActions').style.display = 'none';
+    document.getElementById('participantsCsvFileInput').value = '';
+}
+
+async function loadParticipantsList() {
+    const loadingEl = document.getElementById('participantsListLoading');
+    const tableEl = document.getElementById('participantsListTable');
+    const emptyEl = document.getElementById('participantsListEmpty');
+    const bodyEl = document.getElementById('participantsListBody');
+    const countEl = document.getElementById('participantsListCount');
+    if (!loadingEl || !tableEl || !emptyEl || !bodyEl) return;
+    loadingEl.style.display = 'block';
+    tableEl.style.display = 'none';
+    emptyEl.style.display = 'none';
+    try {
+        const res = await fetch('/api/admin/participants', { cache: 'no-store' });
+        const text = await res.text();
+        const isHtml = /^\s*</.test(text) || text.includes('<!DOCTYPE') || text.includes('<html');
+        if (isHtml) {
+            throw new Error('Wrong server. Open http://localhost:3000/admin and ensure the Node server is running (npm start).');
+        }
+        let participants;
+        try {
+            participants = JSON.parse(text);
+        } catch (_) {
+            throw new Error('Invalid server response. Use http://localhost:3000/admin, not a static file server.');
+        }
+        loadingEl.style.display = 'none';
+        if (participants.length === 0) {
+            emptyEl.style.display = 'block';
+            if (countEl) countEl.textContent = '0 participants';
+        } else {
+            tableEl.style.display = 'block';
+            if (countEl) countEl.textContent = participants.length + ' participant(s)';
+            bodyEl.innerHTML = participants.map((p, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td>${(p.name || '').replace(/</g, '&lt;')}</td>
+                    <td>${(p.regNo || '').replace(/</g, '&lt;')}</td>
+                    <td>${(p.college || '').replace(/</g, '&lt;')}</td>
+                    <td>${(p.city || '').replace(/</g, '&lt;')}</td>
+                    <td>${(p.email || '').replace(/</g, '&lt;')}</td>
+                    <td>${(p.dept || '').replace(/</g, '&lt;')}</td>
+                    <td>${(p.year || '').replace(/</g, '&lt;')}</td>
+                </tr>
+            `).join('');
+        }
+    } catch (err) {
+        loadingEl.style.display = 'none';
+        emptyEl.style.display = 'block';
+        emptyEl.textContent = 'Failed to load participants: ' + err.message;
+        if (countEl) countEl.textContent = '—';
+    }
+}
+
+/* ── REAL-TIME SSE ─────────────────────────────────────── */
+let evtSrc = null;
+function connectSSE() {
+    if (evtSrc) evtSrc.close();
+    evtSrc = new EventSource('/api/events');
+    evtSrc.onopen = () => {
+        const ld = document.getElementById('liveDot'); if (ld) ld.classList.add('green');
+        const rs = document.getElementById('realtimeStatus'); if (rs) rs.textContent = 'Live';
+    };
+    evtSrc.onmessage = e => {
+        try {
+            const d = JSON.parse(e.data);
+            if (['registration','deletion','reset','problems'].includes(d.type)) fetchData();
+        } catch (_) {}
+    };
+    evtSrc.onerror = () => {
+        if (ld) ld.classList.remove('green');
+        if (rs) rs.textContent = 'Reconnecting…';
+        setTimeout(connectSSE, 5000);
+    };
+}
+
+/* ── CLOCK ─────────────────────────────────────────────── */
+function updateClock() {
+    const ct = document.getElementById('currentTime'); if (ct) ct.textContent = new Date().toLocaleTimeString('en-IN', {
+        timeZone: 'Asia/Kolkata', hour12: true
+    }) + ' IST';
+}
+
+/* ── INIT ──────────────────────────────────────────────── */
+async function init() {
+    const banner = document.getElementById('serverWarningBanner');
+    try {
+        const r = await fetch('/api/problem-statements', { cache: 'no-store' });
+        const t = await r.text();
+        if (/^\s*</.test(t) || t.includes('<!DOCTYPE') || t.includes('<html')) {
+            if (banner) { banner.style.display = 'block'; return; }
+        }
+    } catch (_) {
+        if (banner) { banner.style.display = 'block'; return; }
+    }
+    fetchData();
+    connectSSE();
+    updateClock();
+    setInterval(updateClock, 1000);
+}
+
+window.addEventListener('beforeunload', () => evtSrc && evtSrc.close());
+document.addEventListener('visibilitychange', () => { if (!document.hidden) fetchData(); });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digicon 4.0 - Home</title>
+  <link rel="stylesheet" href="prism-theme.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; width: 100%; overflow-x: hidden; }
+    .prism-body { position: relative; z-index: 1; }
+    .header-logos {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 32px; gap: 32px;
+      border-bottom: 1px solid rgba(230, 57, 70, 0.2);
+      background: rgba(10, 10, 10, 0.95);
+      position: relative; z-index: 2;
+    }
+    .header-logos img {
+      height: 50px; width: auto; object-fit: contain;
+      filter: brightness(0.95);
+      transition: transform 0.2s;
+    }
+    .header-logos img:hover { transform: scale(1.02); }
+    .header-logos .euphoria-banner { height: 75px; max-width: 720px; }
+    .header-logos .chapter-logo { height: 55px; }
+    @media (max-width: 768px) {
+      .header-logos { gap: 16px; padding: 16px 20px; flex-wrap: wrap; justify-content: center; }
+      .header-logos img { height: 40px; }
+      .header-logos .euphoria-banner { height: 55px; max-width: 280px; }
+    }
+    .main {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 75vh; padding: 40px 20px; max-width: 1200px; margin: 0 auto;
+    }
+    .main-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      letter-spacing: 8px;
+      color: #e63946;
+      margin-bottom: 8px;
+      text-align: center;
+      text-shadow: 0 0 30px rgba(230, 57, 70, 0.3);
+    }
+    .subtitle {
+      font-size: 1.1rem; color: #9ca3af; margin-bottom: 12px;
+      font-weight: 500; text-align: center; letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    .desc {
+      font-size: 1rem; color: #9ca3af; margin-bottom: 36px;
+      text-align: center; max-width: 640px; line-height: 1.7;
+    }
+    .btn-row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px; }
+    .main-btn {
+      margin: 0; border-radius: 4px; cursor: pointer;
+      font-size: 0.95rem; padding: 16px 32px; outline: none;
+      font-family: 'Barlow', sans-serif; font-weight: 600; letter-spacing: 2px;
+      transition: all 0.2s ease;
+    }
+    .main-btn.primary {
+      background: #e63946; color: #fff !important; border: none;
+      box-shadow: 0 0 20px rgba(230, 57, 70, 0.3);
+    }
+    .main-btn.primary:hover {
+      background: #c1121f;
+      box-shadow: 0 0 30px rgba(230, 57, 70, 0.5);
+      transform: translateY(-1px);
+    }
+    .main-btn.secondary {
+      background: transparent; color: #e63946 !important;
+      border: 2px solid #e63946;
+      transition: all 0.2s ease;
+    }
+    .main-btn.secondary:hover {
+      background: rgba(230, 57, 70, 0.1);
+      transform: translateY(-1px);
+    }
+    .info-cards {
+      display: flex; justify-content: center; gap: 24px;
+      margin-top: 24px; flex-wrap: wrap; width: 100%;
+    }
+    .info-card {
+      background: #121212;
+      border: 1px solid rgba(230, 57, 70, 0.25);
+      border-radius: 8px;
+      padding: 24px 32px;
+      min-width: 180px; max-width: 260px;
+      text-align: center;
+      color: #e8e8e8;
+      transition: all 0.2s ease;
+    }
+    .info-card:hover {
+      border-color: rgba(230, 57, 70, 0.5);
+      box-shadow: 0 0 20px rgba(230, 57, 70, 0.1);
+    }
+    .info-label {
+      font-size: 0.7rem; font-weight: 600; color: #e63946;
+      margin-bottom: 8px; letter-spacing: 3px; text-transform: uppercase;
+    }
+    .info-value { font-size: 1.1rem; color: #fff; font-weight: 600; }
+    .site-footer { position: relative; z-index: 1; }
+    .cyber-modal {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; visibility: hidden; opacity: 0; transition: opacity 0.2s;
+    }
+    .cyber-modal.active { visibility: visible; opacity: 1; }
+    .cyber-modal-content {
+      background: #121212;
+      border: 1px solid rgba(230, 57, 70, 0.3);
+      border-radius: 8px;
+      box-shadow: 0 0 40px rgba(230, 57, 70, 0.2);
+      padding: 32px 40px;
+      color: #e8e8e8;
+      min-width: 340px; max-width: 95vw; max-height: 85vh; overflow-y: auto;
+    }
+    .cyber-modal-content h3 {
+      margin: 0 0 20px 0; font-size: 1.3rem;
+      color: #e63946; font-weight: 600; text-align: center;
+    }
+    .cyber-modal-btns { margin-top: 24px; display: flex; justify-content: center; }
+    .cyber-modal-btn {
+      background: #e63946; color: #fff !important; border: none; border-radius: 4px;
+      font-size: 1rem; padding: 12px 28px; cursor: pointer;
+      font-family: 'Barlow', sans-serif; font-weight: 600;
+    }
+    .criteria-section {
+      margin-bottom: 20px; padding: 20px;
+      background: #1a1a1a;
+      border-radius: 6px; border-left: 4px solid #e63946;
+    }
+    .criteria-section h3 { color: #e63946; font-size: 1.1rem; margin-bottom: 12px; }
+    .criteria-section h4 { color: #e8e8e8; font-size: 1rem; margin: 16px 0 8px 0; }
+    .criteria-section ul { margin: 8px 0; padding-left: 20px; }
+    .criteria-section li { margin-bottom: 6px; line-height: 1.5; color: #9ca3af; }
+    .criteria-item {
+      background: #1a1a1a;
+      border: 1px solid rgba(230, 57, 70, 0.2);
+      border-radius: 6px; padding: 12px; margin-bottom: 8px;
+      display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .criteria-item .criteria-name { font-weight: 600; color: #e63946; flex: 1; }
+    .criteria-item .criteria-weight {
+      background: #e63946; color: #fff; padding: 4px 10px; border-radius: 4px;
+      font-size: 0.85rem; font-weight: 600; margin-left: 12px;
+    }
+    .criteria-item .criteria-description { color: #9ca3af; font-size: 0.9rem; margin-top: 4px; }
+    .criteria-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .team-select-input {
+      width: 100%; padding: 12px 14px; margin-bottom: 12px;
+      background: #1a1a1a; border: 1px solid rgba(230, 57, 70, 0.3);
+      border-radius: 4px; color: #e8e8e8; font-size: 1rem;
+      font-family: 'Barlow', sans-serif;
+    }
+    .team-select-input:focus { outline: none; border-color: #e63946; }
+    .team-search-wrap { position: relative; }
+    .team-search-results {
+      position: absolute; top: 100%; left: 0; right: 0;
+      background: #1a1a1a; border: 1px solid rgba(230, 57, 70, 0.3);
+      border-radius: 4px; max-height: 200px; overflow-y: auto;
+      z-index: 10; margin-top: 4px; display: none;
+    }
+    .team-search-results.show { display: block; }
+    .team-search-item {
+      padding: 12px 14px; cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      transition: background 0.2s;
+    }
+    .team-search-item:hover { background: rgba(230, 57, 70, 0.1); }
+    .team-search-item:last-child { border-bottom: none; }
+    .team-search-item .team-name { font-weight: 600; color: #e8e8e8; }
+    .team-search-item .team-meta { font-size: 0.85rem; color: #9ca3af; margin-top: 4px; }
+    .team-details-box {
+      background: #1a1a1a; border: 1px solid rgba(230, 57, 70, 0.2);
+      border-radius: 6px; padding: 16px; margin: 16px 0;
+    }
+    .team-details-box .row { margin: 8px 0; }
+    .team-details-box .label { color: #9ca3af; font-size: 0.85rem; }
+    .team-details-box .value { color: #e8e8e8; font-weight: 500; }
+    @media (max-width: 768px) {
+      .main { padding: 24px 16px; }
+      .info-card { padding: 20px 24px; min-width: 160px; }
+      .cyber-modal-content { padding: 24px 20px; }
+    }
+    @media (max-width: 480px) {
+      .btn-row { flex-direction: column; align-items: center; }
+      .main-btn { width: 100%; max-width: 280px; }
+    }
+  </style>
+</head>
+<body class="prism-body">
+  <header class="header-logos">
+    <div class="header-left">
+      <img src="cybernerds-logo.png" alt="Cybernerds" class="chapter-logo" />
+    </div>
+    <div class="header-center">
+      <img src="euphoria-logo.png" alt="EUPHORIA" class="euphoria-banner" />
+    </div>
+    <div class="header-right">
+      <img src="owasp-logo.png" alt="OWASP" class="chapter-logo" />
+    </div>
+  </header>
+  <div class="main" style="max-width:1400px; margin:0 auto;">
+    <div class="main-title">DIGICON 4.0</div>
+    <div class="subtitle">Euphoria Techno Management Meet 2026</div>
+    <div class="desc">DIGICON 4.0 is a technical event organized by the KARE ACM SIGBED student chapter at Kalasalingam Academy of Research and Education. It provides a platform for students to showcase their technical skills, innovation, and creativity through various digital and computing-based competitions. 🚀</div>
+    <div class="btn-row">
+      <button class="main-btn primary" id="selectProblemBtn">SELECT PROBLEM STATEMENT</button>
+      <button class="main-btn secondary" onclick="window.open('https://docs.google.com/document/d/1zC1CX4DxlV-btPG388ffVXkl7__hpn0660z-JZJ0jvo/edit?usp=sharing', '_blank')">RULEBOOK</button>
+    </div>
+    <div class="info-cards">
+      <div class="info-card">
+        <div class="info-label">DATE & TIME</div>
+        <div class="info-value">13-14th March</div>
+      </div>
+      <div class="info-card">
+        <div class="info-label">VENUE</div>
+        <div class="info-value">8th Block VSLI Lab</div>
+      </div>
+      <div class="info-card">
+        <div class="info-label">PRIZE POOL</div>
+        <div class="info-value">₹15,000</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Team selection modal: User enters name -> fetch from participants CSV -> Problem page -->
+  <div class="cyber-modal" id="teamSelectModal">
+    <div class="cyber-modal-content" style="max-width: 480px;">
+      <div id="teamSelectStep1" class="team-select-step">
+        <h3>Enter Your Name</h3>
+        <p style="color: #9ca3af; margin-bottom: 20px; font-size: 0.95rem;">Type your name to fetch your team from the participants list. Admin must upload the participants CSV first.</p>
+        <div class="team-search-wrap">
+          <input type="text" id="participantNameInput" class="team-select-input" placeholder="Type your name..." autocomplete="off" />
+          <div id="participantSearchResults" class="team-search-results"></div>
+        </div>
+        <div id="selectedTeamDetails" class="team-details-box" style="display: none;">
+          <div class="row"><span class="label">Team:</span> <span class="value" id="dispTeamName">—</span></div>
+          <div class="row"><span class="label">Leader:</span> <span class="value" id="dispTeamLeader">—</span></div>
+          <div class="row"><span class="label">Members:</span> <span class="value" id="dispTeamMembers">—</span></div>
+        </div>
+        <div class="cyber-modal-btns" style="margin-top: 24px;">
+          <button class="cyber-modal-btn" id="teamStep1Continue" disabled>Continue to Problem Selection</button>
+        </div>
+      </div>
+      <div class="cyber-modal-btns" style="margin-top: 12px;">
+        <button class="cyber-modal-btn" id="teamSelectCancel" style="background: transparent; color: #e63946; border: 2px solid #e63946;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="cyber-modal" id="evaluationModal">
+    <div class="cyber-modal-content" style="max-width: 900px; max-height: 80vh; overflow-y: auto;">
+      <div id="evaluationModalContent"></div>
+      <div class="cyber-modal-btns">
+        <button class="cyber-modal-btn" id="evaluationModalClose">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function fetchEvaluationCriteria() {
+      try {
+        const res = await fetch('/api/evaluation-criteria', { cache: 'no-store' });
+        return await res.json();
+      } catch (error) {
+        console.error('Error fetching evaluation criteria:', error);
+        return null;
+      }
+    }
+
+    function renderEvaluationCriteria(criteria) {
+      if (!criteria) return '<p>Evaluation criteria not available.</p>';
+      let html = '<h3 style="color: #e63946; margin-bottom: 20px; text-align: center;">Evaluation Criteria</h3>';
+      if (criteria.technicalRequirements) {
+        html += `<div class="criteria-section"><h3>${criteria.technicalRequirements.title}</h3><ul>${criteria.technicalRequirements.requirements.map(req => `<li>${req}</li>`).join('')}</ul></div>`;
+      }
+      if (criteria.goalsDeliverables) {
+        html += `<div class="criteria-section"><h3>${criteria.goalsDeliverables.title}</h3><ul>${criteria.goalsDeliverables.goals.map(goal => `<li>${goal}</li>`).join('')}</ul></div>`;
+      }
+      if (criteria.judgingRubric) {
+        html += '<div class="criteria-section">';
+        if (criteria.judgingRubric.round1) {
+          html += `<h4>${criteria.judgingRubric.round1.title}</h4><div class="criteria-grid">${criteria.judgingRubric.round1.criteria.map(c => `<div class="criteria-item"><div><div class="criteria-name">${c.name}</div><div class="criteria-description">${c.description}</div></div><div class="criteria-weight">${c.weight}</div></div>`).join('')}</div>`;
+        }
+        if (criteria.judgingRubric.round2) {
+          html += `<h4 style="margin-top: 24px;">${criteria.judgingRubric.round2.title}</h4><div class="criteria-grid">${criteria.judgingRubric.round2.criteria.map(c => `<div class="criteria-item"><div><div class="criteria-name">${c.name}</div><div class="criteria-description">${c.description}</div></div><div class="criteria-weight">${c.weight}</div></div>`).join('')}</div>`;
+        }
+        html += '</div>';
+      }
+      return html;
+    }
+
+    function showEvaluationCriteriaModal() {
+      const modal = document.getElementById('evaluationModal');
+      const content = document.getElementById('evaluationModalContent');
+      content.innerHTML = '<div style="text-align: center; padding: 20px; color: #9ca3af;">Loading...</div>';
+      modal.classList.add('active');
+      fetchEvaluationCriteria().then(criteria => {
+        content.innerHTML = renderEvaluationCriteria(criteria);
+      }).catch(() => {
+        content.innerHTML = '<p style="color: #e63946; text-align: center; padding: 20px;">Error loading. Please try again.</p>';
+      });
+    }
+
+    function hideEvaluationCriteriaModal() {
+      document.getElementById('evaluationModal').classList.remove('active');
+    }
+
+    document.getElementById('evaluationModalClose').addEventListener('click', hideEvaluationCriteriaModal);
+    document.getElementById('evaluationModal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) hideEvaluationCriteriaModal();
+    });
+
+    // Team selection: User enters name -> fetch from participants CSV (admin uploads) -> Problem page
+    let selectedTeamData = null;
+    let searchDebounce = null;
+
+    async function searchParticipants(q) {
+      if (!q || q.length < 2) return [];
+      const res = await fetch('/api/participants/search?q=' + encodeURIComponent(q), { cache: 'no-store' });
+      return await res.json();
+    }
+
+    document.getElementById('selectProblemBtn').addEventListener('click', () => {
+      selectedTeamData = null;
+      document.getElementById('participantNameInput').value = '';
+      document.getElementById('participantSearchResults').classList.remove('show');
+      document.getElementById('participantSearchResults').innerHTML = '';
+      document.getElementById('selectedTeamDetails').style.display = 'none';
+      document.getElementById('teamStep1Continue').disabled = true;
+      document.getElementById('teamSelectModal').classList.add('active');
+    });
+
+    document.getElementById('participantNameInput').addEventListener('input', () => {
+      const q = document.getElementById('participantNameInput').value.trim();
+      if (searchDebounce) clearTimeout(searchDebounce);
+      if (q.length < 2) {
+        document.getElementById('participantSearchResults').classList.remove('show');
+        document.getElementById('participantSearchResults').innerHTML = '';
+        selectedTeamData = null;
+        document.getElementById('selectedTeamDetails').style.display = 'none';
+        document.getElementById('teamStep1Continue').disabled = true;
+        return;
+      }
+      searchDebounce = setTimeout(async () => {
+        const results = await searchParticipants(q);
+        const resultsEl = document.getElementById('participantSearchResults');
+        resultsEl.innerHTML = '';
+        if (results.length === 0) {
+          resultsEl.innerHTML = '<div class="team-search-item" style="cursor:default;color:#9ca3af;">No participants found. Ask admin to upload participants CSV.</div>';
+        } else {
+          results.forEach(r => {
+            const div = document.createElement('div');
+            div.className = 'team-search-item';
+            const num = r.teamNumber || '';
+            const name = r.teamName || '';
+            const leader = r.teamLeader || '';
+            const members = r.teamMembers || '';
+            const pName = r.participantName || '';
+            div.innerHTML = `<div class="team-name">${pName}</div><div class="team-meta">Team: ${name} | Leader: ${leader}</div>`;
+            div.onclick = () => {
+              selectedTeamData = { teamNumber: num, teamName: name, teamLeader: leader, teamMembers: members };
+              document.getElementById('participantNameInput').value = pName;
+              document.getElementById('participantSearchResults').classList.remove('show');
+              document.getElementById('participantSearchResults').innerHTML = '';
+              document.getElementById('dispTeamName').textContent = name;
+              document.getElementById('dispTeamLeader').textContent = leader;
+              document.getElementById('dispTeamMembers').textContent = (members || '').replace(/\|/g, ', ').replace(/;/g, ', ') || '—';
+              document.getElementById('selectedTeamDetails').style.display = 'block';
+              document.getElementById('teamStep1Continue').disabled = false;
+            };
+            resultsEl.appendChild(div);
+          });
+        }
+        resultsEl.classList.add('show');
+      }, 300);
+    });
+
+    document.getElementById('participantNameInput').addEventListener('blur', () => {
+      setTimeout(() => document.getElementById('participantSearchResults').classList.remove('show'), 200);
+    });
+
+    document.getElementById('teamStep1Continue').addEventListener('click', () => {
+      if (!selectedTeamData) return;
+      const data = { ...selectedTeamData };
+      data.teamMembers = data.teamMembers || '';
+      sessionStorage.setItem('selectedTeam', JSON.stringify(data));
+      document.getElementById('teamSelectModal').classList.remove('active');
+      window.location.href = '/problem';
+    });
+
+    document.getElementById('teamSelectCancel').addEventListener('click', () => {
+      document.getElementById('teamSelectModal').classList.remove('active');
+    });
+  </script>
+  <footer class="site-footer">
+    <div class="footer-marquee">
+      <span class="footer-marquee-inner">DESIGNED AND DEVELOPED WITH ♥, KARE ACM SIGBED STUDENT CHAPTER &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; DESIGNED AND DEVELOPED WITH ♥, KARE ACM SIGBED STUDENT CHAPTER</span>
+    </div>
+  </footer>
+</body>
+</html>
