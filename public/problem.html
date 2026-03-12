@@ -850,7 +850,7 @@
           showCyberModal(details, () => {
             document.getElementById('selectedProblemId').value = psId;
             if (teamNumber && teamName && teamLeader && psId) {
-              document.getElementById('registerForm').requestSubmit();
+              submitRegistration(teamNumber, teamName, teamLeader, teamMembersVal, psId);
             } else {
               showErrorPopup('Team details are missing. Please go back and complete the team form on the home page.');
               document.getElementById('teamSummaryBox').scrollIntoView({ behavior: 'smooth' });
@@ -910,68 +910,80 @@
         hideSuccessPopup();
       }, 5000);
     }
+    async function submitRegistration(teamNumber, teamName, teamLeader, teamMembers, problemStatementId) {
+      const form = document.getElementById('registerForm');
+      if (form.classList.contains('submitting')) return;
+      form.classList.add('submitting');
+      const handleResponse = (res, text, data) => {
+        if (res.ok) {
+          const problemTitle = (data.registration?.problem_title || data.problemStatement?.title) || 'Selected Problem';
+          showSuccessPopup(teamName, problemTitle);
+          load();
+          document.getElementById('selectedProblemId').value = '';
+        } else {
+          const msg = (data && data.error ? String(data.error) : '').toLowerCase();
+          if (res.status === 409) {
+            if (msg.includes('team number already registered') || msg.includes('already selected')) {
+              showErrorPopup('You have already selected a problem statement.');
+            } else if (msg.includes('full') || msg.includes('limit')) {
+              showErrorPopup('Sorry, the problem statement has reached its limit. Please select another problem.');
+            } else {
+              showErrorPopup(data.error || 'Registration failed. Please try again.');
+            }
+          } else {
+            showErrorPopup(data.error || data.details || 'Registration failed.');
+          }
+        }
+      };
+      try {
+        // Team was stored on home page confirm; update with problem selection
+        let res = await fetch('/api/registration/' + encodeURIComponent(teamNumber), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ problemStatementId })
+        });
+        let text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch (_) { data = {}; }
+        if (/^\s*</.test(text) || text.includes('<!DOCTYPE')) {
+          showErrorPopup('Server returned HTML. Ensure you are using the correct URL (e.g. http://localhost:3000) and the Node server is running (npm start).');
+          return;
+        }
+        if (res.ok) {
+          handleResponse(res, text, data);
+          return;
+        }
+        // Fallback: if team was not pre-stored (old flow), try full registration
+        if (res.status === 409 && (data.error || '').toLowerCase().includes('not exist')) {
+          res = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ teamNumber, teamName, teamLeader, problemStatementId, teamMembers: teamMembers || '' })
+          });
+          text = await res.text();
+          try { data = JSON.parse(text); } catch (_) { data = {}; }
+        }
+        handleResponse(res, text, data);
+      } catch (error) {
+        console.error('Registration error:', error);
+        showErrorPopup('Network error: ' + (error.message || 'Please check your connection and try again.'));
+      } finally {
+        form.classList.remove('submitting');
+      }
+    }
+
     document.getElementById('registerForm').onsubmit = async e => {
       e.preventDefault();
-      
-      // Prevent multiple submissions
-      const form = document.getElementById('registerForm');
-      if (form.classList.contains('submitting')) {
-        return;
-      }
-      
-      form.classList.add('submitting');
-      
       const teamNumber = document.getElementById('teamNumber').value.trim();
       const teamName = document.getElementById('teamName').value.trim();
       const teamLeader = document.getElementById('teamLeader').value.trim();
       const teamMembers = (document.getElementById('teamMembers') && document.getElementById('teamMembers').value) || '';
       const problemStatementId = document.getElementById('selectedProblemId').value;
-      
       if (!teamNumber || !teamName || !teamLeader || !problemStatementId) {
         showErrorPopup('Please complete team details on the home page, then select a problem statement.');
-        form.classList.remove('submitting');
         return;
       }
-      
-      try {
-        const res = await fetch('/api/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ teamNumber, teamName, teamLeader, problemStatementId, teamMembers })
-        });
-        const data = await res.json();
-        
-        if (res.ok) {
-          // Get the problem title for the success popup
-          const problemTitle = data.registration?.problemStatement?.title || 'Selected Problem';
-          
-          // Show success popup
-          showSuccessPopup(teamName, problemTitle);
-          
-          // Refresh the problem list
-          load();
-          
-          // Reset only the selected problem (team data stays)
-          document.getElementById('selectedProblemId').value = '';
-        } else {
-          // Specific handling for duplicate team and capacity reached
-          if (res.status === 409) {
-            const msg = (data && data.error ? String(data.error) : '').toLowerCase();
-            if (msg.includes('team number already registered')) {
-              showErrorPopup('You have already selected a problem statement.');
-            } else {
-              showErrorPopup('Sorry, the problem statement has reached its limit. Please select another problem.');
-            }
-          } else {
-            showErrorPopup(data.error || 'Registration failed.');
-          }
-        }
-      } catch (error) {
-        console.error('Registration error:', error);
-        showErrorPopup('Network error. Please try again.');
-      } finally {
-        form.classList.remove('submitting');
-      }
+      await submitRegistration(teamNumber, teamName, teamLeader, teamMembers, problemStatementId);
     };
     async function load() {
       const problems = await fetchProblems();

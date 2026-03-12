@@ -145,7 +145,7 @@ class MongoStore {
       team_name: r.teamName,
       team_leader: r.teamLeader,
       team_members: r.teamMembers || '',
-      problem_title: idToPs.get(r.problemStatementId)?.title || '',
+      problem_title: (r.problemStatementId && idToPs.get(r.problemStatementId)?.title) || 'Pending',
       problem_category: idToPs.get(r.problemStatementId)?.category || null,
       problem_difficulty: idToPs.get(r.problemStatementId)?.difficulty || null,
       registration_date_time: r.registrationDateTime
@@ -172,6 +172,66 @@ class MongoStore {
     const target = String(teamNumber).trim();
     const found = await regs.findOne({ teamNumber: target });
     return Boolean(found);
+  }
+
+  async createTeamOnly(teamNumber, teamName, teamLeader, teamMembers) {
+    if (!this.collections) await this.init();
+    const { regs } = this.collections;
+    const target = String(teamNumber).trim();
+    const exists = await regs.findOne({ teamNumber: target });
+    if (exists) return null;
+    try {
+      await regs.insertOne({
+        teamNumber: target,
+        teamName: teamName || '',
+        teamLeader: teamLeader || '',
+        teamMembers: teamMembers || '',
+        problemStatementId: null,
+        registrationDateTime: new Date().toISOString()
+      });
+      return { id: target, changes: 1 };
+    } catch (e) {
+      if (e.code === 11000) return null;
+      throw e;
+    }
+  }
+
+  async updateRegistrationProblem(teamNumber, problemStatementId) {
+    if (!this.collections) await this.init();
+    const { regs, ps } = this.collections;
+    const target = String(teamNumber).trim();
+    const reg = await regs.findOne({ teamNumber: target });
+    if (!reg) return null;
+    const problem = await ps.findOne({ id: problemStatementId });
+    if (!problem) return null;
+    const maxSel = Math.max(1, (typeof problem.maxSelections === 'number' ? problem.maxSelections : parseInt(problem.maxSelections || '0', 10) || 0));
+    const actualCount = await regs.countDocuments({ problemStatementId: problem.id });
+    if (actualCount >= maxSel) return null;
+    const session = this.client.startSession();
+    try {
+      let result = null;
+      await session.withTransaction(async () => {
+        const capacity = await ps.updateOne(
+          { id: problem.id, $expr: { $lt: [ { $ifNull: ['$selectedCount', 0] }, { $literal: maxSel } ] } },
+          { $inc: { selectedCount: 1 } },
+          { session }
+        );
+        if (!capacity || capacity.modifiedCount === 0) {
+          result = null;
+          return;
+        }
+        const upd = await regs.updateOne({ teamNumber: target }, { $set: { problemStatementId } }, { session });
+        if (upd.modifiedCount > 0) result = { id: target, changes: 1 };
+        else {
+          try { await ps.updateOne({ id: problem.id }, { $inc: { selectedCount: -1 } }, { session }); } catch (_) {}
+        }
+      }, { readConcern: { level: 'majority' }, writeConcern: { w: 'majority' }, readPreference: 'primary' });
+      return result;
+    } catch (e) {
+      throw e;
+    } finally {
+      await session.endSession();
+    }
   }
 
   async createRegistrationAtomic(registration) {

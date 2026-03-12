@@ -100,7 +100,7 @@ class MemoryStore {
       team_name: r.teamName,
       team_leader: r.teamLeader,
       team_members: r.teamMembers || '',
-      problem_title: idToPs.get(r.problemStatementId)?.title || '',
+      problem_title: (r.problemStatementId && idToPs.get(r.problemStatementId)?.title) || 'Pending',
       problem_category: idToPs.get(r.problemStatementId)?.category || null,
       problem_difficulty: idToPs.get(r.problemStatementId)?.difficulty || null,
       registration_date_time: r.registrationDateTime
@@ -123,6 +123,34 @@ class MemoryStore {
   async isTeamNumberTaken(teamNumber) {
     const target = String(teamNumber).trim();
     return this.registrations.some(r => r.teamNumber === target);
+  }
+
+  async createTeamOnly(teamNumber, teamName, teamLeader, teamMembers) {
+    const target = String(teamNumber).trim();
+    if (this.registrations.some(r => r.teamNumber === target)) return null;
+    const record = {
+      teamNumber: target,
+      teamName: teamName || '',
+      teamLeader: teamLeader || '',
+      teamMembers: teamMembers || '',
+      problemStatementId: null,
+      registrationDateTime: new Date().toISOString()
+    };
+    this.registrations.push(record);
+    return { id: record.teamNumber, changes: 1 };
+  }
+
+  async updateRegistrationProblem(teamNumber, problemStatementId) {
+    const target = String(teamNumber).trim();
+    const reg = this.registrations.find(r => r.teamNumber === target);
+    if (!reg) return null;
+    const problem = this.problemStatements.find(p => p.id === problemStatementId);
+    if (!problem) return null;
+    const maxSel = Math.max(1, typeof problem.maxSelections === 'number' ? problem.maxSelections : parseInt(problem.maxSelections || '0', 10) || 0);
+    const count = this.registrations.filter(r => r.problemStatementId === problem.id).length;
+    if (count >= maxSel) return null;
+    reg.problemStatementId = problemStatementId;
+    return { id: target, changes: 1 };
   }
 
   async createRegistrationAtomic(registration) {

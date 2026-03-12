@@ -758,7 +758,8 @@ Jane Smith,21CS002,KARE,Madurai,jane@mail.com,9876543211,CSE,F,3</div>
                         </div>
                     </div>
                     <div class="section-body">
-                        <p style="color: #9ca3af; margin-bottom: 16px; font-size: 0.9rem;">Teams are stored in the database when users complete registration. Data is fetched from the database below. Use Delete to remove a team registration if needed.</p>
+                        <div id="teamsRegStorageWarning" style="display:none; background: rgba(230, 57, 70, 0.15); border: 1px solid rgba(230, 57, 70, 0.4); border-radius: 6px; padding: 12px 16px; margin-bottom: 16px; color: #e63946; font-size: 0.9rem;">⚠️ Using in-memory storage. Data will be lost on server restart. Set MONGODB_URI for persistent storage.</div>
+                        <p style="color: #9ca3af; margin-bottom: 16px; font-size: 0.9rem;">Teams are stored when users confirm on the home page (before problem selection). Problem shows as "Pending" until selected. Use Refresh to reload and Delete to remove a team.</p>
                         <div id="teamsRegLoading" class="loading-text">Loading teams from database…</div>
                         <div id="teamsRegTable" style="display:none;">
                             <div class="table-wrap">
@@ -1348,11 +1349,17 @@ async function loadTeamsRegistrations() {
     const emptyEl = document.getElementById('teamsRegEmpty');
     const bodyEl = document.getElementById('teamsRegBody');
     const countEl = document.getElementById('teamsRegCount');
+    const warnEl = document.getElementById('teamsRegStorageWarning');
     if (!loadingEl || !tableEl || !emptyEl || !bodyEl) return;
     loadingEl.style.display = 'block';
     tableEl.style.display = 'none';
     emptyEl.style.display = 'none';
     try {
+        const modeRes = await fetch('/api/admin/storage-mode', { cache: 'no-store' });
+        try {
+            const modeData = await modeRes.json();
+            if (warnEl) warnEl.style.display = (modeData.mode === 'memory') ? 'block' : 'none';
+        } catch (_) { if (warnEl) warnEl.style.display = 'none'; }
         const res = await fetch('/api/registrations', { cache: 'no-store' });
         const text = await res.text();
         const isHtml = /^\s*</.test(text) || text.includes('<!DOCTYPE') || text.includes('<html');

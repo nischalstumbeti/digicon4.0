@@ -223,6 +223,66 @@ app.get('/api/events', (req, res) => {
   req.on('close', () => { clearInterval(heartbeat); connectedClients.delete(res); });
 });
 
+// Store team only (when user confirms on home page, before problem selection)
+app.post('/api/register/team', async (req, res) => {
+  try {
+    const { teamNumber, teamName, teamLeader, teamMembers } = req.body;
+    if (!teamNumber || !teamName || !teamLeader) {
+      return res.status(400).json({ error: 'Missing required fields: teamNumber, teamName, teamLeader' });
+    }
+    const isTaken = await db.isTeamNumberTaken(teamNumber);
+    if (isTaken) return res.status(409).json({ error: 'Team number already registered.' });
+    const result = typeof db.createTeamOnly === 'function'
+      ? await db.createTeamOnly(teamNumber, teamName, teamLeader, teamMembers || '')
+      : null;
+    if (!result) return res.status(409).json({ error: 'Team number already registered.' });
+    console.log('[Registration] Team saved (pending problem):', { teamNumber, teamName, teamLeader });
+    try {
+      const updatedRegistrations = await db.getAllRegistrations();
+      broadcastUpdate('registration', { registrations: updatedRegistrations });
+    } catch (_) {}
+    res.json({ success: true, message: 'Team registered. Please select a problem statement.', teamNumber });
+  } catch (error) {
+    console.error('Error saving team:', error);
+    res.status(500).json({ error: 'Failed to save team', details: error.message });
+  }
+});
+
+// Update existing team registration with problem statement (when user selects problem on problem page)
+app.patch('/api/registration/:teamNumber', async (req, res) => {
+  try {
+    const teamNumber = String(req.params.teamNumber || '').trim();
+    const { problemStatementId } = req.body || {};
+    if (!teamNumber || !problemStatementId) {
+      return res.status(400).json({ error: 'Missing teamNumber or problemStatementId' });
+    }
+    const ps = await db.getProblemStatementById(problemStatementId);
+    if (!ps) return res.status(404).json({ error: 'Problem statement not found.' });
+    const result = typeof db.updateRegistrationProblem === 'function'
+      ? await db.updateRegistrationProblem(teamNumber, problemStatementId)
+      : null;
+    if (!result) {
+      const allProblems = formatProblems(await db.getAllProblemStatements());
+      const targetProblem = allProblems.find(p => p.id === problemStatementId);
+      if (targetProblem && !targetProblem.isAvailable) {
+        return res.status(409).json({ error: 'Problem statement is full. Please select another.' });
+      }
+      return res.status(409).json({ error: 'Registration update failed. Team may not exist or problem is full.' });
+    }
+    console.log('[Registration] Problem updated:', { teamNumber, problemStatementId });
+    try {
+      const updatedRegistrations = await db.getAllRegistrations();
+      const updatedProblems = formatProblems(await db.getAllProblemStatements());
+      broadcastUpdate('registration', { registrations: updatedRegistrations, problems: updatedProblems });
+    } catch (_) {}
+    const reg = (await db.getAllRegistrations()).find(r => r.team_number === teamNumber);
+    res.json({ success: true, message: 'Registration complete!', registration: reg });
+  } catch (error) {
+    console.error('Error updating registration:', error);
+    res.status(500).json({ error: 'Failed to update registration', details: error.message });
+  }
+});
+
 app.post('/api/register', async (req, res) => {
   try {
     const { teamNumber, teamName, teamLeader, problemStatementId, teamMembers } = req.body;
@@ -269,7 +329,8 @@ app.post('/api/register', async (req, res) => {
       }
     }
     
-    // Registration successful
+    // Registration successful - log for debugging
+    console.log('[Registration] Saved:', { teamNumber, teamName, teamLeader, problemStatementId });
     try {
       const updatedRegistrations = await db.getAllRegistrations();
       const updatedProblems = formatProblems(await db.getAllProblemStatements());
@@ -405,6 +466,10 @@ app.get('/api/registrations', async (req, res) => {
     console.error('Error fetching registrations:', error);
     res.status(500).json({ error: 'Failed to fetch registrations' });
   }
+});
+
+app.get('/api/admin/storage-mode', (req, res) => {
+  res.json({ mode: process.env.MONGODB_URI ? 'mongodb' : 'memory' });
 });
 
 app.get('/api/evaluation-criteria', async (req, res) => {
