@@ -240,9 +240,61 @@
   <div class="cyber-modal" id="teamSelectModal">
     <div class="cyber-modal-content" style="max-width: 580px;">
       <div id="teamStep1" class="team-select-step">
-        <h3>Enter Your Team Name</h3>
-        <p style="color: #9ca3af; margin-bottom: 20px; font-size: 0.95rem;">Enter your team name as registered.</p>
-        <input type="text" id="inputTeamName" class="team-select-input" placeholder="e.g. Team Alpha" />
+        <h3>Select Your Team Name</h3>
+        <p style="color: #9ca3af; margin-bottom: 20px; font-size: 0.95rem;">Choose your team name from the list.</p>
+        <select id="inputTeamName" class="team-select-input">
+          <option value="">— Select Team —</option>
+          <option value="Upside Circuits">Upside Circuits</option>
+          <option value="Hawkins Circuits">Hawkins Circuits</option>
+          <option value="Demogorgon Tech">Demogorgon Tech</option>
+          <option value="Shadow Circuits">Shadow Circuits</option>
+          <option value="Mind Circuits">Mind Circuits</option>
+          <option value="Gate Hackers">Gate Hackers</option>
+          <option value="Void Circuits">Void Circuits</option>
+          <option value="Dark Signals">Dark Signals</option>
+          <option value="Static Coders">Static Coders</option>
+          <option value="Signal Seekers">Signal Seekers</option>
+          <option value="Circuit Shadows">Circuit Shadows</option>
+          <option value="Hawkins Signals">Hawkins Signals</option>
+          <option value="Upside Signals">Upside Signals</option>
+          <option value="Logic Demogorgons">Logic Demogorgons</option>
+          <option value="Byte Flayers">Byte Flayers</option>
+          <option value="Shadow Hackers">Shadow Hackers</option>
+          <option value="Circuit Hunters">Circuit Hunters</option>
+          <option value="Binary Shadows">Binary Shadows</option>
+          <option value="Signal Hackers">Signal Hackers</option>
+          <option value="Dark Coders">Dark Coders</option>
+          <option value="Circuit Explorers">Circuit Explorers</option>
+          <option value="Upside Engineers">Upside Engineers</option>
+          <option value="Shadow Engineers">Shadow Engineers</option>
+          <option value="Gate Engineers">Gate Engineers</option>
+          <option value="Static Engineers">Static Engineers</option>
+          <option value="Digital Shadows">Digital Shadows</option>
+          <option value="Circuit Rangers">Circuit Rangers</option>
+          <option value="Logic Shadows">Logic Shadows</option>
+          <option value="Byte Shadows">Byte Shadows</option>
+          <option value="Signal Builders">Signal Builders</option>
+          <option value="Circuit Wizards">Circuit Wizards</option>
+          <option value="Tech Shadows">Tech Shadows</option>
+          <option value="Code Shadows">Code Shadows</option>
+          <option value="Circuit Legends">Circuit Legends</option>
+          <option value="Logic Circuits">Logic Circuits</option>
+          <option value="Smart Shadows">Smart Shadows</option>
+          <option value="Tech Hunters">Tech Hunters</option>
+          <option value="Signal Ninjas">Signal Ninjas</option>
+          <option value="Byte Engineers">Byte Engineers</option>
+          <option value="Circuit Breakers">Circuit Breakers</option>
+          <option value="Quantum Circuits">Quantum Circuits</option>
+          <option value="Phantom Coders">Phantom Coders</option>
+          <option value="Signal Phantoms">Signal Phantoms</option>
+          <option value="Cyber Circuits">Cyber Circuits</option>
+          <option value="Logic Hunters">Logic Hunters</option>
+          <option value="Binary Engineers">Binary Engineers</option>
+          <option value="Circuit Phantoms">Circuit Phantoms</option>
+          <option value="Shadow Signals">Shadow Signals</option>
+          <option value="Digital Hackers">Digital Hackers</option>
+          <option value="Tech Phantoms">Tech Phantoms</option>
+        </select>
         <div class="cyber-modal-btns" style="margin-top: 20px;">
           <button class="cyber-modal-btn" id="btnStep1Next">Next</button>
         </div>
@@ -437,7 +489,10 @@
 
     document.getElementById('btnStep1Next').addEventListener('click', () => {
       const teamName = document.getElementById('inputTeamName').value.trim();
-      if (!teamName) return;
+      if (!teamName) {
+        alert('Please select a team name.');
+        return;
+      }
       showStep(2);
     });
 
@@ -524,7 +579,7 @@
   </script>
   <footer class="site-footer">
     <div class="footer-marquee">
-      <span class="footer-marquee-inner">DESIGNED AND DEVELOPED WITH ♥, KARE ACM SIGBED STUDENT CHAPTER &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; DESIGNED AND DEVELOPED WITH ♥, KARE ACM SIGBED STUDENT CHAPTER</span>
+      <span class="footer-marquee-inner">DESIGNED AND DEVELOPED WITH ♥, KARE ACM SIGBED STUDENT CHAPTER</span>
     </div>
   </footer>
 </body>
