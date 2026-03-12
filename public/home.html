@@ -438,6 +438,18 @@
       return await res.json();
     }
 
+    function getUsedNamesExcluding(inputId) {
+      const used = new Set();
+      const norm = (s) => String(s || '').toLowerCase().trim();
+      ['inputTeamLeader', 'inputMember1', 'inputMember2'].forEach(id => {
+        if (id !== inputId) {
+          const el = document.getElementById(id);
+          if (el && el.value) used.add(norm(el.value));
+        }
+      });
+      return used;
+    }
+
     function attachParticipantAutocomplete(inputId, resultsId) {
       const input = document.getElementById(inputId);
       const resultsEl = document.getElementById(resultsId);
@@ -453,6 +465,8 @@
         }
         debounceTimer = setTimeout(async () => {
           const list = await searchParticipants(q);
+          const used = getUsedNamesExcluding(inputId);
+          const norm = (s) => String(s || '').toLowerCase().trim();
           resultsEl.innerHTML = '';
           if (list.length === 0) {
             resultsEl.innerHTML = '<div class="team-search-item" style="cursor:default;color:#9ca3af;">No participants found.</div>';
@@ -462,8 +476,14 @@
               div.className = 'team-search-item';
               const name = p.participantName || p.name || '';
               const meta = [p.college, p.regNo].filter(Boolean).join(' • ');
-              div.innerHTML = `<div class="team-name">${name}</div>${meta ? `<div class="team-meta">${meta}</div>` : ''}`;
+              const isUsed = used.has(norm(name));
+              div.innerHTML = `<div class="team-name">${name}</div>${meta ? `<div class="team-meta">${meta}</div>` : ''}${isUsed ? '<div class="team-meta" style="color:#ef4444;">Already added</div>' : ''}`;
+              if (isUsed) div.style.opacity = '0.6';
               div.onclick = () => {
+                if (used.has(norm(name))) {
+                  alert('This person is already added as Team Leader or Team Member.');
+                  return;
+                }
                 input.value = name;
                 resultsEl.innerHTML = '';
                 resultsEl.classList.remove('show');
@@ -482,15 +502,41 @@
     attachParticipantAutocomplete('inputMember1', 'acMember1');
     attachParticipantAutocomplete('inputMember2', 'acMember2');
 
+    async function fetchTakenTeamNames() {
+      try {
+        const res = await fetch('/api/registrations', { cache: 'no-store' });
+        const regs = await res.json();
+        return (regs || []).map(r => String(r.team_name || '').trim().toLowerCase()).filter(Boolean);
+      } catch (_) { return []; }
+    }
+
+    function updateTeamNameDropdown() {
+      fetchTakenTeamNames().then(taken => {
+        const select = document.getElementById('inputTeamName');
+        if (!select) return;
+        Array.from(select.options).forEach(opt => {
+          if (opt.value) {
+            opt.disabled = taken.includes(opt.value.trim().toLowerCase());
+          }
+        });
+      });
+    }
+
     document.getElementById('selectProblemBtn').addEventListener('click', () => {
       resetModal();
+      updateTeamNameDropdown();
       document.getElementById('teamSelectModal').classList.add('active');
     });
 
-    document.getElementById('btnStep1Next').addEventListener('click', () => {
+    document.getElementById('btnStep1Next').addEventListener('click', async () => {
       const teamName = document.getElementById('inputTeamName').value.trim();
       if (!teamName) {
         alert('Please select a team name.');
+        return;
+      }
+      const taken = await fetchTakenTeamNames();
+      if (taken.includes(teamName.toLowerCase())) {
+        alert('This team name has already been registered. Please select a different team.');
         return;
       }
       showStep(2);
@@ -579,7 +625,10 @@
   </script>
   <footer class="site-footer">
     <div class="footer-marquee">
-      <span class="footer-marquee-inner">DESIGNED AND DEVELOPED WITH ♥, KARE ACM SIGBED STUDENT CHAPTER</span>
+      <div class="footer-marquee-track">
+        <span class="footer-marquee-inner">DESIGNED AND DEVELOPED WITH ♥, KARE ACM SIGBED STUDENT CHAPTER</span>
+        <span class="footer-marquee-inner">DESIGNED AND DEVELOPED WITH ♥, KARE ACM SIGBED STUDENT CHAPTER</span>
+      </div>
     </div>
   </footer>
 </body>

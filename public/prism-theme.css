@@ -149,12 +149,12 @@ body {
 .prism-accent-cyan,
 .prism-accent-green { color: var(--st-red); }
 
-/* Footer - marquee left to right */
+/* Footer - marquee right to left, continuous */
 .site-footer {
   overflow: hidden;
   padding: 16px 0;
-  font-size: 0.85rem;
-  color: #6b7280;
+  font-size: 1.1rem;
+  color: #9ca3af;
   width: 100%;
   border-top: 1px solid rgba(230, 57, 70, 0.15);
 }
@@ -162,13 +162,16 @@ body {
   overflow: hidden;
   width: 100%;
 }
-.footer-marquee-inner {
-  display: inline-block;
+.footer-marquee-track {
+  display: inline-flex;
   white-space: nowrap;
-  padding-right: 100%;
   animation: footerMarquee 25s linear infinite;
 }
+.footer-marquee-inner {
+  display: inline-block;
+  padding-right: 4em;
+}
 @keyframes footerMarquee {
-  0% { transform: translateX(-50%); }
-  100% { transform: translateX(0); }
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
