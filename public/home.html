@@ -22,12 +22,14 @@
       transition: transform 0.2s;
     }
     .header-logos img:hover { transform: scale(1.02); }
+    .header-logos .header-left { display: flex; align-items: center; gap: 24px; }
     .header-logos .euphoria-banner { height: 120px; max-width: 900px; }
-    .header-logos .chapter-logo { height: 55px; }
+    .header-logos .header-side-logo { height: 95px; width: auto; object-fit: contain; }
     @media (max-width: 768px) {
       .header-logos { gap: 16px; padding: 16px 20px; flex-wrap: wrap; justify-content: center; }
       .header-logos img { height: 40px; }
       .header-logos .euphoria-banner { height: 80px; max-width: 360px; }
+      .header-logos .header-side-logo { height: 70px; }
     }
     .main {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -193,14 +195,13 @@
 <body class="prism-body">
   <header class="header-logos">
     <div class="header-left">
-      <img src="cybernerds-logo.png" alt="Cybernerds" class="chapter-logo" />
+      <img src="kalasalingam-logo.png" alt="Kalasalingam Academy of Research and Education" class="header-side-logo" />
+      <img src="kare-acm-logo.png" alt="KARE ACM SIGBED Chapter" class="header-side-logo" />
     </div>
     <div class="header-center">
       <img src="euphoria-logo.png" alt="EUPHORIA" class="euphoria-banner" />
     </div>
-    <div class="header-right">
-      <img src="owasp-logo.png" alt="OWASP" class="chapter-logo" />
-    </div>
+    <div class="header-right"></div>
   </header>
   <div class="main" style="max-width:1400px; margin:0 auto;">
     <div class="main-title">DIGICON 4.0</div>
