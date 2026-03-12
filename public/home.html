@@ -226,23 +226,46 @@
     </div>
   </div>
 
-  <!-- Team selection modal: User enters name -> fetch from participants CSV -> Problem page -->
+  <!-- Team details modal: Team name → Leader → Members → Confirm → Problem page -->
   <div class="cyber-modal" id="teamSelectModal">
     <div class="cyber-modal-content" style="max-width: 480px;">
-      <div id="teamSelectStep1" class="team-select-step">
-        <h3>Enter Your Name</h3>
-        <p style="color: #9ca3af; margin-bottom: 20px; font-size: 0.95rem;">Note: If your name is not visible, please contact the event coordinators.</p>
-        <div class="team-search-wrap">
-          <input type="text" id="participantNameInput" class="team-select-input" placeholder="Type your name..." autocomplete="off" />
-          <div id="participantSearchResults" class="team-search-results"></div>
+      <div id="teamStep1" class="team-select-step">
+        <h3>Enter Your Team Name</h3>
+        <p style="color: #9ca3af; margin-bottom: 20px; font-size: 0.95rem;">Enter your team name as registered.</p>
+        <input type="text" id="inputTeamName" class="team-select-input" placeholder="e.g. Team Alpha" />
+        <div class="cyber-modal-btns" style="margin-top: 20px;">
+          <button class="cyber-modal-btn" id="btnStep1Next">Next</button>
         </div>
-        <div id="selectedTeamDetails" class="team-details-box" style="display: none;">
-          <div class="row"><span class="label">Team:</span> <span class="value" id="dispTeamName">—</span></div>
-          <div class="row"><span class="label">Leader:</span> <span class="value" id="dispTeamLeader">—</span></div>
-          <div class="row"><span class="label">Members:</span> <span class="value" id="dispTeamMembers">—</span></div>
+      </div>
+      <div id="teamStep2" class="team-select-step" style="display: none;">
+        <h3>Enter Team Leader Name</h3>
+        <p style="color: #9ca3af; margin-bottom: 20px; font-size: 0.95rem;">Enter the name of your team leader.</p>
+        <input type="text" id="inputTeamLeader" class="team-select-input" placeholder="e.g. John Doe" />
+        <div class="cyber-modal-btns" style="margin-top: 20px;">
+          <button class="cyber-modal-btn" id="btnStep2Back" style="background: transparent; color: #e63946; border: 2px solid #e63946;">Back</button>
+          <button class="cyber-modal-btn" id="btnStep2Next">Next</button>
         </div>
-        <div class="cyber-modal-btns" style="margin-top: 24px;">
-          <button class="cyber-modal-btn" id="teamStep1Continue" disabled>Continue to Problem Selection</button>
+      </div>
+      <div id="teamStep3" class="team-select-step" style="display: none;">
+        <h3>Enter Team Member Details</h3>
+        <p style="color: #9ca3af; margin-bottom: 20px; font-size: 0.95rem;">Enter names of all team members (comma-separated).</p>
+        <input type="text" id="inputTeamMembers" class="team-select-input" placeholder="e.g. Jane, Mike, Sarah" />
+        <div class="cyber-modal-btns" style="margin-top: 20px;">
+          <button class="cyber-modal-btn" id="btnStep3Back" style="background: transparent; color: #e63946; border: 2px solid #e63946;">Back</button>
+          <button class="cyber-modal-btn" id="btnStep3Next">Next</button>
+        </div>
+      </div>
+      <div id="teamStep4" class="team-select-step" style="display: none;">
+        <h3>Confirm Team Details</h3>
+        <p style="color: #9ca3af; margin-bottom: 16px; font-size: 0.95rem;">Please verify your details before proceeding.</p>
+        <div id="confirmTeamDetails" class="team-details-box">
+          <div class="row"><span class="label">Team Name:</span> <span class="value" id="confirmTeamName">—</span></div>
+          <div class="row"><span class="label">Team Leader:</span> <span class="value" id="confirmTeamLeader">—</span></div>
+          <div class="row"><span class="label">Team Members:</span> <span class="value" id="confirmTeamMembers">—</span></div>
+        </div>
+        <div class="cyber-modal-btns" style="margin-top: 20px;">
+          <button class="cyber-modal-btn" id="btnStep4Back" style="background: transparent; color: #e63946; border: 2px solid #e63946;">Back</button>
+          <button class="cyber-modal-btn" id="btnStep4Confirm">Confirm &amp; Select Problem</button>
         </div>
       </div>
       <div class="cyber-modal-btns" style="margin-top: 12px;">
@@ -314,79 +337,58 @@
       if (e.target === e.currentTarget) hideEvaluationCriteriaModal();
     });
 
-    // Team selection: User enters name -> fetch from participants CSV (admin uploads) -> Problem page
-    let selectedTeamData = null;
-    let searchDebounce = null;
+    // Team details flow: Team name → Leader → Members → Confirm → Problem page
+    function showStep(stepNum) {
+      [1, 2, 3, 4].forEach(n => {
+        const el = document.getElementById('teamStep' + n);
+        if (el) el.style.display = n === stepNum ? 'block' : 'none';
+      });
+    }
 
-    async function searchParticipants(q) {
-      if (!q || q.length < 2) return [];
-      const res = await fetch('/api/participants/search?q=' + encodeURIComponent(q), { cache: 'no-store' });
-      return await res.json();
+    function resetModal() {
+      document.getElementById('inputTeamName').value = '';
+      document.getElementById('inputTeamLeader').value = '';
+      document.getElementById('inputTeamMembers').value = '';
+      showStep(1);
     }
 
     document.getElementById('selectProblemBtn').addEventListener('click', () => {
-      selectedTeamData = null;
-      document.getElementById('participantNameInput').value = '';
-      document.getElementById('participantSearchResults').classList.remove('show');
-      document.getElementById('participantSearchResults').innerHTML = '';
-      document.getElementById('selectedTeamDetails').style.display = 'none';
-      document.getElementById('teamStep1Continue').disabled = true;
+      resetModal();
       document.getElementById('teamSelectModal').classList.add('active');
     });
 
-    document.getElementById('participantNameInput').addEventListener('input', () => {
-      const q = document.getElementById('participantNameInput').value.trim();
-      if (searchDebounce) clearTimeout(searchDebounce);
-      if (q.length < 2) {
-        document.getElementById('participantSearchResults').classList.remove('show');
-        document.getElementById('participantSearchResults').innerHTML = '';
-        selectedTeamData = null;
-        document.getElementById('selectedTeamDetails').style.display = 'none';
-        document.getElementById('teamStep1Continue').disabled = true;
-        return;
-      }
-      searchDebounce = setTimeout(async () => {
-        const results = await searchParticipants(q);
-        const resultsEl = document.getElementById('participantSearchResults');
-        resultsEl.innerHTML = '';
-        if (results.length === 0) {
-          resultsEl.innerHTML = '<div class="team-search-item" style="cursor:default;color:#9ca3af;">No participants found. Ask admin to upload participants CSV.</div>';
-        } else {
-          results.forEach(r => {
-            const div = document.createElement('div');
-            div.className = 'team-search-item';
-            const num = r.teamNumber || '';
-            const name = r.teamName || '';
-            const leader = r.teamLeader || '';
-            const members = r.teamMembers || '';
-            const pName = r.participantName || '';
-            div.innerHTML = `<div class="team-name">${pName}</div><div class="team-meta">Team: ${name} | Leader: ${leader}</div>`;
-            div.onclick = () => {
-              selectedTeamData = { teamNumber: num, teamName: name, teamLeader: leader, teamMembers: members };
-              document.getElementById('participantNameInput').value = pName;
-              document.getElementById('participantSearchResults').classList.remove('show');
-              document.getElementById('participantSearchResults').innerHTML = '';
-              document.getElementById('dispTeamName').textContent = name;
-              document.getElementById('dispTeamLeader').textContent = leader;
-              document.getElementById('dispTeamMembers').textContent = (members || '').replace(/\|/g, ', ').replace(/;/g, ', ') || '—';
-              document.getElementById('selectedTeamDetails').style.display = 'block';
-              document.getElementById('teamStep1Continue').disabled = false;
-            };
-            resultsEl.appendChild(div);
-          });
-        }
-        resultsEl.classList.add('show');
-      }, 300);
+    document.getElementById('btnStep1Next').addEventListener('click', () => {
+      const teamName = document.getElementById('inputTeamName').value.trim();
+      if (!teamName) return;
+      showStep(2);
     });
 
-    document.getElementById('participantNameInput').addEventListener('blur', () => {
-      setTimeout(() => document.getElementById('participantSearchResults').classList.remove('show'), 200);
+    document.getElementById('btnStep2Back').addEventListener('click', () => showStep(1));
+    document.getElementById('btnStep2Next').addEventListener('click', () => {
+      const leader = document.getElementById('inputTeamLeader').value.trim();
+      if (!leader) return;
+      showStep(3);
     });
 
-    document.getElementById('teamStep1Continue').addEventListener('click', () => {
-      if (!selectedTeamData) return;
-      const data = { ...selectedTeamData };
-      data.teamMembers = data.teamMembers || '';
+    document.getElementById('btnStep3Back').addEventListener('click', () => showStep(2));
+    document.getElementById('btnStep3Next').addEventListener('click', () => {
+      const teamName = document.getElementById('inputTeamName').value.trim();
+      const leader = document.getElementById('inputTeamLeader').value.trim();
+      const members = document.getElementById('inputTeamMembers').value.trim();
+      document.getElementById('confirmTeamName').textContent = teamName || '—';
+      document.getElementById('confirmTeamLeader').textContent = leader || '—';
+      document.getElementById('confirmTeamMembers').textContent = members || '—';
+      showStep(4);
+    });
+
+    document.getElementById('btnStep4Back').addEventListener('click', () => showStep(3));
+    document.getElementById('btnStep4Confirm').addEventListener('click', () => {
+      const teamName = document.getElementById('inputTeamName').value.trim();
+      const leader = document.getElementById('inputTeamLeader').value.trim();
+      const members = document.getElementById('inputTeamMembers').value.trim();
+      if (!teamName || !leader) return;
+      const teamNumber = 'T' + Date.now();
+      const data = { teamNumber, teamName, teamLeader: leader, teamMembers: members };
       sessionStorage.setItem('selectedTeam', JSON.stringify(data));
       document.getElementById('teamSelectModal').classList.remove('active');
       window.location.href = '/problem';

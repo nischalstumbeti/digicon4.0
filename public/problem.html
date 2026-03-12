@@ -662,27 +662,30 @@
   <div class="container">
     <h1>Choose Your Journey</h1>
     <div id="message" class="message"></div>
-    <div class="form-autocomplete-wrapper" style="position: relative;">
-    <form id="registerForm">
-      <input type="text" id="teamName" placeholder="Enter Team Name" required />
-      <input type="text" id="teamLeader" placeholder="Type Team Leader name to search..." autocomplete="off" />
-      <input type="text" id="teamMembersInput" placeholder="Type to select Team Members from list..." autocomplete="off" />
+    <div id="teamSummaryBox" class="problem-note" style="margin-bottom: 24px;">
+      <h3>Your Team Details</h3>
+      <div style="display: grid; gap: 8px; margin-top: 12px;">
+        <div><strong style="color:#9ca3af;">Team Name:</strong> <span id="dispTeamName">—</span></div>
+        <div><strong style="color:#9ca3af;">Team Leader:</strong> <span id="dispTeamLeader">—</span></div>
+        <div><strong style="color:#9ca3af;">Team Members:</strong> <span id="dispTeamMembers">—</span></div>
+      </div>
+      <p style="margin-top: 12px; font-size: 0.9rem;"><a href="/" style="color: #e63946;">← Change team details</a></p>
+    </div>
+    <form id="registerForm" style="display: none;">
+      <input type="hidden" id="teamName" />
+      <input type="hidden" id="teamLeader" />
+      <input type="hidden" id="teamMembersInput" />
       <input type="hidden" id="teamNumber" />
       <input type="hidden" id="teamMembers" name="teamMembers" />
       <input type="hidden" id="selectedProblemId" />
     </form>
-    <div id="teamLookupMsg" class="team-lookup-msg"></div>
-    <div id="autocompleteDropdown" class="autocomplete-dropdown"></div>
-    </div>
     
     <!-- Important Note -->
     <div class="problem-note">
       <h3>⚠️ Important Information</h3>
       <ul>
-        <li>Enter your Team Name manually. Type Team Leader name to search from the admin-uploaded list.</li>
-        <li>Type to select Team Members from the CSV list. Data is fetched automatically as you type.</li>
-        <li>Once a problem statement is selected, it cannot be changed.</li>
-        <li>For any issues or clarifications, consult the faculty coordinators.</li>
+        <li>Select a problem statement below. Once selected, it cannot be changed.</li>
+        <li>For any issues or clarifications, contact the event coordinators.</li>
       </ul>
     </div>
     
@@ -711,8 +714,32 @@
 
 
   <script>
+    function loadTeamFromSession() {
+      try {
+        const raw = sessionStorage.getItem('selectedTeam');
+        if (!raw) {
+          window.location.href = '/';
+          return false;
+        }
+        const team = JSON.parse(raw);
+        document.getElementById('teamNumber').value = team.teamNumber || '';
+        document.getElementById('teamName').value = team.teamName || '';
+        document.getElementById('teamLeader').value = team.teamLeader || '';
+        document.getElementById('teamMembers').value = team.teamMembers || '';
+        document.getElementById('teamMembersInput').value = team.teamMembers || '';
+        document.getElementById('dispTeamName').textContent = team.teamName || '—';
+        document.getElementById('dispTeamLeader').textContent = team.teamLeader || '—';
+        document.getElementById('dispTeamMembers').textContent = (team.teamMembers || '—').replace(/\|/g, ', ').replace(/;/g, ', ');
+        return true;
+      } catch (_) {
+        window.location.href = '/';
+        return false;
+      }
+    }
+
     async function checkReleaseAndLoad() {
       try {
+        if (!loadTeamFromSession()) return;
         const res = await fetch('/api/problem-statement-released', { cache: 'no-store' });
         const data = await res.json();
         const released = data.released === true;
@@ -825,8 +852,8 @@
             if (teamNumber && teamName && teamLeader && psId) {
               document.getElementById('registerForm').requestSubmit();
             } else {
-              showErrorPopup('Please enter Team Name and select Team Leader from the search list.');
-              document.getElementById('registerForm').scrollIntoView({ behavior: 'smooth' });
+              showErrorPopup('Team details are missing. Please go back and complete the team form on the home page.');
+              document.getElementById('teamSummaryBox').scrollIntoView({ behavior: 'smooth' });
             }
           });
         };
@@ -901,7 +928,7 @@
       const problemStatementId = document.getElementById('selectedProblemId').value;
       
       if (!teamNumber || !teamName || !teamLeader || !problemStatementId) {
-        showErrorPopup('Please enter Team Name and select Team Leader from the search list, then select a problem statement.');
+        showErrorPopup('Please complete team details on the home page, then select a problem statement.');
         form.classList.remove('submitting');
         return;
       }
@@ -924,14 +951,8 @@
           // Refresh the problem list
           load();
           
-          // Reset form
-          document.getElementById('registerForm').reset();
+          // Reset only the selected problem (team data stays)
           document.getElementById('selectedProblemId').value = '';
-          document.getElementById('teamNumber').value = '';
-          document.getElementById('teamMembers').value = '';
-          document.getElementById('teamLookupMsg').textContent = '';
-          document.getElementById('teamLookupMsg').className = 'team-lookup-msg';
-          selectedTeamForMembers = null;
         } else {
           // Specific handling for duplicate team and capacity reached
           if (res.status === 409) {
@@ -986,111 +1007,6 @@
 
     // Fallback: poll release status every 20 seconds (in case SSE fails)
     setInterval(checkReleaseAndLoad, 20000);
-
-    // Autocomplete: Team Leader & Team Members from CSV
-    let selectedTeamForMembers = null;
-    let acTimer = null;
-    let acActive = 'none'; // 'leader' | 'members'
-
-    function parseTeamMembers(str) {
-      if (!str || !str.trim()) return [];
-      return str.split(/[|;,]+/).map(s => s.trim()).filter(Boolean);
-    }
-
-    function showAcDropdown(items, inputEl, onSelect) {
-      const dd = document.getElementById('autocompleteDropdown');
-      dd.innerHTML = '';
-      if (!items.length) { dd.classList.remove('show'); return; }
-      items.forEach((item) => {
-        const div = document.createElement('div');
-        div.className = 'ac-item';
-        div.textContent = typeof item === 'string' ? item : ((item.teamName || item.team_name || '') + ' - ' + (item.teamLeader || item.team_leader || '')).trim() || item.teamLeader || item.team_leader || item.teamNumber;
-        div.onclick = () => { onSelect(item); dd.classList.remove('show'); };
-        dd.appendChild(div);
-      });
-      dd.style.top = (inputEl.offsetTop + inputEl.offsetHeight + 4) + 'px';
-      dd.style.left = inputEl.offsetLeft + 'px';
-      dd.style.width = inputEl.offsetWidth + 'px';
-      dd.classList.add('show');
-    }
-
-    function hideAcDropdown() {
-      document.getElementById('autocompleteDropdown').classList.remove('show');
-    }
-
-    async function searchTeams(q) {
-      if (!q || q.length < 2) return [];
-      const res = await fetch('/api/teams/search?q=' + encodeURIComponent(q), { cache: 'no-store' });
-      return await res.json();
-    }
-
-    document.getElementById('teamLeader').addEventListener('input', () => {
-      const q = document.getElementById('teamLeader').value.trim();
-      if (acTimer) clearTimeout(acTimer);
-      selectedTeamForMembers = null;
-      document.getElementById('teamNumber').value = '';
-      document.getElementById('teamMembersInput').value = '';
-      document.getElementById('teamMembers').value = '';
-      if (!q || q.length < 2) { hideAcDropdown(); return; }
-      acActive = 'leader';
-      acTimer = setTimeout(async () => {
-        const teams = await searchTeams(q);
-        showAcDropdown(teams, document.getElementById('teamLeader'), (t) => {
-          document.getElementById('teamLeader').value = t.teamLeader || t.team_leader || '';
-          document.getElementById('teamNumber').value = t.teamNumber || t.team_number || '';
-          selectedTeamForMembers = t;
-          document.getElementById('teamMembersInput').value = '';
-          document.getElementById('teamMembers').value = '';
-          document.getElementById('teamMembersInput').placeholder = 'Type to select Team Members from list...';
-          document.getElementById('teamLookupMsg').textContent = '';
-        });
-      }, 300);
-    });
-
-    document.getElementById('teamLeader').addEventListener('blur', () => { setTimeout(hideAcDropdown, 150); });
-
-    document.getElementById('teamMembersInput').addEventListener('input', () => {
-      const fullVal = document.getElementById('teamMembersInput').value;
-      const q = fullVal.includes(',') ? fullVal.split(',').pop().trim().toLowerCase() : fullVal.trim().toLowerCase();
-      if (!selectedTeamForMembers) {
-        document.getElementById('teamLookupMsg').textContent = 'Select Team Leader first.';
-        document.getElementById('teamLookupMsg').className = 'team-lookup-msg error';
-        return;
-      }
-      document.getElementById('teamLookupMsg').textContent = '';
-      const members = parseTeamMembers(selectedTeamForMembers.teamMembers || selectedTeamForMembers.team_members || '');
-      if (!members.length) { hideAcDropdown(); return; }
-      const filtered = q ? members.filter(m => m.toLowerCase().includes(q)) : members;
-      showAcDropdown(filtered, document.getElementById('teamMembersInput'), (m) => {
-        const existing = document.getElementById('teamMembers').value.split(',').map(s=>s.trim()).filter(Boolean);
-        if (!existing.includes(m)) existing.push(m);
-        document.getElementById('teamMembers').value = existing.join(', ');
-        document.getElementById('teamMembersInput').value = existing.join(', ');
-      });
-      acActive = 'members';
-    });
-
-    document.getElementById('teamMembersInput').addEventListener('focus', () => {
-      if (selectedTeamForMembers) {
-        const members = parseTeamMembers(selectedTeamForMembers.teamMembers || selectedTeamForMembers.team_members || '');
-        if (members.length) showAcDropdown(members, document.getElementById('teamMembersInput'), (m) => {
-          const existing = document.getElementById('teamMembers').value.split(',').map(s=>s.trim()).filter(Boolean);
-          if (!existing.includes(m)) existing.push(m);
-          document.getElementById('teamMembers').value = existing.join(', ');
-          document.getElementById('teamMembersInput').value = existing.join(', ');
-        });
-        document.getElementById('teamLookupMsg').textContent = '';
-      } else {
-        document.getElementById('teamLookupMsg').textContent = 'Select Team Leader first.';
-        document.getElementById('teamLookupMsg').className = 'team-lookup-msg error';
-      }
-    });
-
-    document.getElementById('teamMembersInput').addEventListener('blur', () => { setTimeout(hideAcDropdown, 150); });
-
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('.form-autocomplete-wrapper')) hideAcDropdown();
-    });
 
   </script>
   <footer class="site-footer">
