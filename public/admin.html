@@ -524,6 +524,35 @@
                     </div>
                 </div>
 
+                <!-- Problem Statements Selection -->
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-header-left">📌 Problem Statements Selection</div>
+                    </div>
+                    <div class="section-body">
+                        <p style="color: #9ca3af; margin-bottom: 12px; font-size: 0.9rem;">Teams that have selected and confirmed their problem statement.</p>
+                        <div id="problemSelectionsLoading" class="loading-text">Loading…</div>
+                        <div id="problemSelectionsTable" style="display:none;">
+                            <div class="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Team Name</th>
+                                            <th>Team Leader</th>
+                                            <th>Problem Statement</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="problemSelectionsBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="problemSelectionsEmpty" style="display:none; padding: 24px; text-align: center; color: #666;">
+                            No problem selections yet. Teams will appear here after they select and confirm a problem.
+                        </div>
+                    </div>
+                </div>
+
             </div><!-- /page-home -->
 
             <!-- ADD PROBLEM STATEMENTS PAGE -->
@@ -854,6 +883,7 @@ async function fetchData() {
         } catch (_) {}
         renderStats(problems, registrations);
         renderProblems(problems);
+        renderProblemSelections(registrations);
         updateReleaseUI(released);
         const u = document.getElementById('updateTime'); if (u) u.textContent = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
     } catch (err) {
@@ -932,6 +962,34 @@ function renderProblems(problems) {
     }
     document.getElementById('problemsLoading').style.display = 'none';
     document.getElementById('problemsTable').style.display = 'block';
+}
+
+function renderProblemSelections(registrations) {
+    const confirmed = (registrations || []).filter(r => r.problem_title && r.problem_title !== 'Pending');
+    const tbody = document.getElementById('problemSelectionsBody');
+    const tableEl = document.getElementById('problemSelectionsTable');
+    const emptyEl = document.getElementById('problemSelectionsEmpty');
+    const loadingEl = document.getElementById('problemSelectionsLoading');
+    if (!tbody) return;
+    loadingEl.style.display = 'none';
+    if (confirmed.length === 0) {
+        tableEl.style.display = 'none';
+        if (emptyEl) emptyEl.style.display = 'block';
+        return;
+    }
+    if (emptyEl) emptyEl.style.display = 'none';
+    confirmed.sort((a, b) => String(a.team_name || '').localeCompare(String(b.team_name || '')));
+    tableEl.style.display = 'block';
+    const escape = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    tbody.innerHTML = confirmed.map(r => {
+        const safeTeamNum = escape(r.team_number);
+        return `<tr>
+            <td>${escape(r.team_name) || '—'}</td>
+            <td>${escape(r.team_leader) || '—'}</td>
+            <td>${escape(r.problem_title) || '—'}</td>
+            <td><button class="btn btn-danger btn-sm" data-team-num="${safeTeamNum}" onclick="deleteRegistration(this.getAttribute('data-team-num'))">🗑 Delete</button></td>
+        </tr>`;
+    }).join('');
 }
 
 /* ── CONFIRM MODAL ─────────────────────────────────────── */
