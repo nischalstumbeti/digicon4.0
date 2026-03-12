@@ -753,6 +753,7 @@ Jane Smith,21CS002,KARE,Madurai,jane@mail.com,9876543211,CSE,F,3</div>
                         <div class="section-header-left">📋 Teams Registration</div>
                         <div class="section-header-actions">
                             <span id="teamsRegCount" style="font-size: 0.9rem; color: #94a3b8;">—</span>
+                            <button class="btn btn-outline btn-sm" onclick="loadTeamsRegistrations()" style="margin-left: 8px;">🔄 Refresh</button>
                             <button class="btn btn-outline btn-sm" onclick="exportData('registrations','pdf')" style="margin-left: 8px;">📄 Export PDF</button>
                         </div>
                     </div>
@@ -1352,8 +1353,19 @@ async function loadTeamsRegistrations() {
     tableEl.style.display = 'none';
     emptyEl.style.display = 'none';
     try {
-        const res = await fetch('/api/admin/registrations', { cache: 'no-store' });
-        const registrations = await res.json();
+        const res = await fetch('/api/registrations', { cache: 'no-store' });
+        const text = await res.text();
+        const isHtml = /^\s*</.test(text) || text.includes('<!DOCTYPE') || text.includes('<html');
+        if (isHtml) {
+            throw new Error('Wrong server. Open http://localhost:3000/admin and ensure the Node server is running.');
+        }
+        let registrations;
+        try {
+            registrations = JSON.parse(text);
+        } catch (_) {
+            throw new Error('Invalid response. Use the Node server (npm start), not a static file server.');
+        }
+        if (!Array.isArray(registrations)) registrations = [];
         loadingEl.style.display = 'none';
         if (countEl) countEl.textContent = registrations.length + ' team(s)';
         if (registrations.length === 0) {
