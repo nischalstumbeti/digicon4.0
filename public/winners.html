@@ -264,20 +264,16 @@
       if (p === 3) return 'place-3';
       return 'place-other';
     }
-    async function loadWinners() {
-      try {
-        const res = await fetch('/api/winners', { cache: 'no-store' });
-        const data = await res.json();
-        const winners = Array.isArray(data.winners) ? data.winners : (Array.isArray(data) ? data : []);
-        const released = data && data.released !== undefined ? data.released : true;
-        const grid = document.getElementById('winnersGrid');
-        const empty = document.getElementById('winnersEmpty');
-        if (!released || !Array.isArray(winners) || winners.length === 0) {
-          grid.style.display = 'none';
-          empty.style.display = 'block';
-          return;
-        }
-        empty.style.display = 'none';
+    function renderWinners(released, winners) {
+      const grid = document.getElementById('winnersGrid');
+      const empty = document.getElementById('winnersEmpty');
+      if (!released || !Array.isArray(winners) || winners.length === 0) {
+        if (grid) grid.style.display = 'none';
+        if (empty) { empty.style.display = 'block'; empty.innerHTML = '<p>Winners will be announced soon. Stay tuned!</p>'; }
+        return;
+      }
+      if (empty) empty.style.display = 'none';
+      if (grid) {
         grid.style.display = 'flex';
         grid.innerHTML = winners.map(w => {
           const pos = parseInt(w.position, 10) || 1;
@@ -295,15 +291,35 @@
             ${w.problemStatement ? `<div class="problem">Problem: ${escapeHtml(w.problemStatement)}</div>` : ''}
           </div>
         `}).join('');
+      }
+    }
+    function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    async function loadWinners() {
+      try {
+        const res = await fetch('/api/winners', { cache: 'no-store' });
+        const data = await res.json();
+        const winners = Array.isArray(data.winners) ? data.winners : (Array.isArray(data) ? data : []);
+        const released = data && data.released !== undefined ? data.released : true;
+        renderWinners(released, winners);
       } catch (err) {
         document.getElementById('winnersEmpty').style.display = 'block';
         document.getElementById('winnersEmpty').innerHTML = '<p>Unable to load winners. Please try again later.</p>';
       }
     }
-    function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
     loadWinners();
     const es = new EventSource('/api/events');
-    es.onmessage = (e) => { try { const p = JSON.parse(e.data); if (p.type === 'winners') loadWinners(); } catch (_) {} };
+    es.onmessage = (e) => {
+      try {
+        const p = JSON.parse(e.data);
+        if (p.type === 'winners' && p.data) {
+          const released = p.data.released !== undefined ? p.data.released : true;
+          const winners = Array.isArray(p.data.winners) ? p.data.winners : [];
+          renderWinners(released, winners);
+        } else if (p.type === 'winners') {
+          loadWinners();
+        }
+      } catch (_) {}
+    };
     es.onerror = () => { try { es.close(); } catch (_) {} };
   </script>
 </body>

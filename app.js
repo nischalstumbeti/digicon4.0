@@ -720,7 +720,8 @@ app.post('/api/admin/winners', async (req, res) => {
       return res.status(409).json({ error: 'This team has already been added as a winner. No duplicate winners allowed.' });
     }
     const winners = await db.getAllWinners();
-    broadcastUpdate('winners', { winners });
+    const released = typeof db.getWinnersReleased === 'function' ? await db.getWinnersReleased() : false;
+    broadcastUpdate('winners', { released, winners });
     res.json({ ok: true, id: result.id, winners });
   } catch (error) {
     console.error('Error adding winner:', error);
@@ -738,7 +739,8 @@ app.patch('/api/admin/winners/:id', async (req, res) => {
     const result = await db.updateWinnerPhoto(req.params.id, teamPhoto || null);
     if (result.changes === 0) return res.status(404).json({ error: 'Winner not found' });
     const winners = await db.getAllWinners();
-    broadcastUpdate('winners', { winners });
+    const released = typeof db.getWinnersReleased === 'function' ? await db.getWinnersReleased() : false;
+    broadcastUpdate('winners', { released, winners });
     res.json({ ok: true, winners });
   } catch (error) {
     console.error('Error updating winner photo:', error);
@@ -752,7 +754,8 @@ app.delete('/api/admin/winners/:id', async (req, res) => {
     const result = await db.deleteWinner(req.params.id);
     if (result.changes === 0) return res.status(404).json({ error: 'Winner not found' });
     const winners = await db.getAllWinners();
-    broadcastUpdate('winners', { winners });
+    const released = typeof db.getWinnersReleased === 'function' ? await db.getWinnersReleased() : false;
+    broadcastUpdate('winners', { released, winners });
     res.json({ ok: true, winners });
   } catch (error) {
     console.error('Error deleting winner:', error);
