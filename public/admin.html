@@ -774,7 +774,6 @@ Jane Smith,21CS002,KARE,Madurai,jane@mail.com,9876543211,CSE,F,3</div>
                                             <th>Team Leader</th>
                                             <th>Team Members</th>
                                             <th>Problem Statement</th>
-                                            <th>Registered At</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
@@ -1058,7 +1057,7 @@ async function exportRegistrationsToCSV() {
             showNotification('No data to export.', true);
             return;
         }
-        const headers = ['#', 'Team #', 'Team Name', 'Team Leader', 'Team Members', 'Problem Statement', 'Registered At'];
+        const headers = ['#', 'Team #', 'Team Name', 'Team Leader', 'Team Members', 'Problem Statement'];
         const escapeCsv = (v) => {
             const s = String(v ?? '').replace(/"/g, '""');
             return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s}"` : s;
@@ -1069,8 +1068,7 @@ async function exportRegistrationsToCSV() {
             r.team_name || '',
             r.team_leader || '',
             (r.team_members || '').replace(/\n/g, ' '),
-            r.problem_title || '',
-            r.registration_date_time ? new Date(r.registration_date_time).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true }) + ' IST' : ''
+            r.problem_title || ''
         ].map(escapeCsv).join(','));
         const csv = [headers.join(','), ...rows].join('\n');
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -1429,7 +1427,6 @@ async function loadTeamsRegistrations() {
                     <td>${escape(r.team_leader) || '—'}</td>
                     <td>${teamMembers || '—'}</td>
                     <td>${escape(r.problem_title) || '—'}</td>
-                    <td>${new Date(r.registration_date_time).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true })} IST</td>
                     <td><button class="btn btn-danger btn-sm" data-team-num="${teamNum}" onclick="deleteRegistration(this.getAttribute('data-team-num'))">🗑 Delete</button></td>
                 </tr>`;
             }).join('');
