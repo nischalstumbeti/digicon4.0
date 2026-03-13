@@ -74,7 +74,7 @@
     @keyframes float { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-12px) scale(1.02); } }
     @keyframes glow-pulse { 0%, 100% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.4), 0 0 80px rgba(255, 215, 0, 0.2); } 50% { box-shadow: 0 0 60px rgba(255, 215, 0, 0.6), 0 0 120px rgba(255, 215, 0, 0.25); } }
     @keyframes glow-silver { 0%, 100% { box-shadow: 0 0 35px rgba(192, 192, 192, 0.35); } 50% { box-shadow: 0 0 55px rgba(192, 192, 192, 0.5); } }
-    @keyframes glow-bronze { 0%, 100% { box-shadow: 0 0 35px rgba(205, 127, 50, 0.35); } 50% { box-shadow: 0 0 55px rgba(205, 127, 50, 0.5); } }
+    @keyframes glow-bronze { 0%, 100% { box-shadow: 0 0 35px rgba(139, 69, 19, 0.4); } 50% { box-shadow: 0 0 55px rgba(139, 69, 19, 0.55); } }
     @keyframes card-reveal { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes sweep { 0% { left: -100%; } 50%, 100% { left: 100%; } }
     .winners-grid { display: flex; flex-direction: column; gap: 32px; align-items: stretch; }
@@ -138,20 +138,20 @@
       text-shadow: 0 0 25px rgba(192, 192, 192, 0.5);
     }
     .winner-card.place-3 {
-      border: 2px solid rgba(205, 127, 50, 0.8);
-      box-shadow: 0 0 45px rgba(205, 127, 50, 0.3), inset 0 0 70px rgba(205, 127, 50, 0.05);
+      border: 2px solid rgba(139, 69, 19, 0.9);
+      box-shadow: 0 0 45px rgba(139, 69, 19, 0.4), inset 0 0 70px rgba(101, 67, 33, 0.08);
       animation: glow-bronze 2.8s ease-in-out infinite, card-reveal 0.6s ease-out 0.3s forwards;
       padding: 42px 52px;
     }
     .winner-card.place-3 .position-badge {
-      background: linear-gradient(135deg, #daa520 0%, #cd7f32 50%, #8b4513 100%);
+      background: linear-gradient(135deg, #8b4513 0%, #654321 50%, #5c4033 100%);
       color: #fff; font-size: 1.1rem; padding: 11px 26px;
-      box-shadow: 0 0 22px rgba(205, 127, 50, 0.6), inset 0 1px 0 rgba(255,255,255,0.2);
+      box-shadow: 0 0 22px rgba(139, 69, 19, 0.6), inset 0 1px 0 rgba(255,255,255,0.15);
       font-family: Verdana, Geneva, sans-serif; font-weight: 700;
     }
     .winner-card.place-3 h3 {
-      font-family: Verdana, Geneva, sans-serif; color: #cd7f32;
-      text-shadow: 0 0 25px rgba(205, 127, 50, 0.5);
+      font-family: Verdana, Geneva, sans-serif; color: #8b4513;
+      text-shadow: 0 0 25px rgba(139, 69, 19, 0.5);
     }
     .winner-card.place-other {
       border: 1px solid rgba(230, 57, 70, 0.4);
@@ -179,8 +179,8 @@
       font-size: 1.05rem; margin-bottom: 8px; font-style: italic;
     }
     .winner-card .members {
-      font-family: Verdana, Geneva, sans-serif; color: #7a7a7a;
-      font-size: 0.95rem;
+      font-family: Verdana, Geneva, sans-serif; color: #a8a8a8;
+      font-size: 1.2rem;
     }
     .winner-photo-wrap {
       margin: 20px auto 20px; border-radius: 16px; overflow: hidden;
