@@ -41,10 +41,11 @@
       width: 180px; height: 1px;
       background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.3), transparent);
     }
-    .hero-banner .trophy-icon {
-      font-size: 5rem; margin-bottom: 16px;
+    .hero-banner .digicon-logo {
+      max-width: 560px; width: 100%; height: auto; margin-bottom: 16px;
       animation: float 2.5s ease-in-out infinite;
       filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.5));
+      display: block; margin-left: auto; margin-right: auto;
     }
     .hero-banner .sparkle { position: absolute; font-size: 1.2rem; opacity: 0.8; animation: twinkle 2s ease-in-out infinite; }
     .hero-banner .sparkle.s1 { top: 20%; left: 15%; animation-delay: 0s; }
@@ -211,6 +212,7 @@
       .winner-card { padding: 28px 24px; }
       .winner-card.place-1, .winner-card.place-2, .winner-card.place-3 { padding: 32px 28px; }
       .hero-banner .sparkle { display: none; }
+      .hero-banner .digicon-logo { max-width: 280px; }
     }
   </style>
 </head>
@@ -237,7 +239,7 @@
       <span class="sparkle s2">✧</span>
       <span class="sparkle s3">✦</span>
       <span class="sparkle s4">✧</span>
-      <div class="trophy-icon">🏆</div>
+      <img src="digicon-winners-logo.png" alt="DIGICON 4.0" class="digicon-logo">
       <h1 class="main-title">WINNERS</h1>
       <p class="subtitle">DIGICON 4.0</p>
       <p class="hero-tagline">Congratulations to our champions!</p>
