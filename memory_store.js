@@ -237,7 +237,8 @@ class MemoryStore {
       teamName: w.teamName || '',
       teamLeader: w.teamLeader || '',
       problemStatement: w.problemStatement || '',
-      teamMembers: w.teamMembers || ''
+      teamMembers: w.teamMembers || '',
+      teamPhoto: w.teamPhoto || null
     }));
   }
 
@@ -253,9 +254,17 @@ class MemoryStore {
       teamName: (winner.teamName || '').trim(),
       teamLeader: winner.teamLeader || '',
       problemStatement: winner.problemStatement || '',
-      teamMembers: winner.teamMembers || ''
+      teamMembers: winner.teamMembers || '',
+      teamPhoto: winner.teamPhoto || null
     });
     return { id, changes: 1 };
+  }
+
+  async updateWinnerPhoto(id, teamPhotoBase64) {
+    const w = this.winners.find(x => x.id === id);
+    if (!w) return { changes: 0 };
+    w.teamPhoto = teamPhotoBase64 || null;
+    return { changes: 1 };
   }
 
   async deleteWinner(id) {

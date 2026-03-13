@@ -556,7 +556,8 @@ class MongoStore {
       teamName: w.teamName || '',
       teamLeader: w.teamLeader || '',
       problemStatement: w.problemStatement || '',
-      teamMembers: w.teamMembers || ''
+      teamMembers: w.teamMembers || '',
+      teamPhoto: w.teamPhoto || null
     }));
   }
 
@@ -575,10 +576,26 @@ class MongoStore {
       teamLeader: winner.teamLeader || '',
       problemStatement: winner.problemStatement || '',
       teamMembers: winner.teamMembers || '',
+      teamPhoto: winner.teamPhoto || null,
       createdAt: new Date().toISOString()
     };
     const res = await winners.insertOne(doc);
     return { id: res.insertedId.toString(), changes: 1 };
+  }
+
+  async updateWinnerPhoto(id, teamPhotoBase64) {
+    if (!this.collections) await this.init();
+    const { winners } = this.collections;
+    const { ObjectId } = require('mongodb');
+    try {
+      const res = await winners.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { teamPhoto: teamPhotoBase64 || null } }
+      );
+      return { changes: res.modifiedCount };
+    } catch (_) {
+      return { changes: 0 };
+    }
   }
 
   async deleteWinner(id) {

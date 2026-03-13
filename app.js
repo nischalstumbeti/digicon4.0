@@ -680,11 +680,11 @@ app.get('/api/winners', async (req, res) => {
 // Admin: add winner
 app.post('/api/admin/winners', async (req, res) => {
   try {
-    const { position, teamName, teamLeader, problemStatement, teamMembers } = req.body || {};
+    const { position, teamName, teamLeader, problemStatement, teamMembers, teamPhoto } = req.body || {};
     if (!teamName || !teamLeader) {
       return res.status(400).json({ error: 'Team name and team leader are required' });
     }
-    const result = await db.addWinner({ position: position || 1, teamName, teamLeader, problemStatement: problemStatement || '', teamMembers: teamMembers || '' });
+    const result = await db.addWinner({ position: position || 1, teamName, teamLeader, problemStatement: problemStatement || '', teamMembers: teamMembers || '', teamPhoto: teamPhoto || null });
     if (!result) {
       return res.status(409).json({ error: 'This team has already been added as a winner. No duplicate winners allowed.' });
     }
@@ -694,6 +694,24 @@ app.post('/api/admin/winners', async (req, res) => {
   } catch (error) {
     console.error('Error adding winner:', error);
     res.status(500).json({ error: error.message || 'Failed to add winner' });
+  }
+});
+
+// Admin: update winner photo
+app.patch('/api/admin/winners/:id', async (req, res) => {
+  try {
+    const { teamPhoto } = req.body || {};
+    if (typeof db.updateWinnerPhoto !== 'function') {
+      return res.status(501).json({ error: 'Photo update not supported' });
+    }
+    const result = await db.updateWinnerPhoto(req.params.id, teamPhoto || null);
+    if (result.changes === 0) return res.status(404).json({ error: 'Winner not found' });
+    const winners = await db.getAllWinners();
+    broadcastUpdate('winners', { winners });
+    res.json({ ok: true, winners });
+  } catch (error) {
+    console.error('Error updating winner photo:', error);
+    res.status(500).json({ error: error.message || 'Failed to update photo' });
   }
 });
 

@@ -207,6 +207,8 @@
 
         /* ── TABLE ──────────────────────────────────────── */
         .table-wrap { overflow-x: auto; }
+        .winner-photo-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+        .winner-photo-cell .no-photo { color: #6b7280; }
         table { width: 100%; border-collapse: collapse; min-width: 520px; }
         thead th { background: #e63946; color: #fff; padding: 11px 12px; text-align: left; font-size: 0.87rem; }
         tbody td { padding: 10px 12px; border-bottom: 1px solid #2a2a2a; font-size: 0.88rem; vertical-align: middle; }
@@ -837,6 +839,12 @@ Jane Smith,21CS002,KARE,Madurai,jane@mail.com,9876543211,CSE,F,3</div>
                                     <input type="text" id="winnerMembers" placeholder="Auto-filled from selection" readonly>
                                 </div>
                             </div>
+                            <div class="form-row full">
+                                <div class="field">
+                                    <label>Team Photo (optional)</label>
+                                    <input type="file" id="winnerTeamPhoto" accept="image/*" style="padding: 8px;">
+                                </div>
+                            </div>
                             <button type="submit" class="btn btn-teal">Add Winner</button>
                         </form>
                     </div>
@@ -859,6 +867,7 @@ Jane Smith,21CS002,KARE,Madurai,jane@mail.com,9876543211,CSE,F,3</div>
                                         <tr>
                                             <th>#</th>
                                             <th>Position</th>
+                                            <th>Photo</th>
                                             <th>Team Name</th>
                                             <th>Team Leader</th>
                                             <th>Problem</th>
@@ -1119,16 +1128,26 @@ async function loadWinnersAdmin() {
         const escape = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         const posLabels = { 1: '1st', 2: '2nd', 3: '3rd' };
         const posLabel = (n) => posLabels[n] || (n + 'th');
-        tbody.innerHTML = winners.map((w, i) => `
-            <tr>
+        tbody.innerHTML = winners.map((w, i) => {
+            const inputId = 'winnerPhotoInput_' + i;
+            const photoSrc = (w.teamPhoto || '').replace(/"/g, '&quot;');
+            return `
+            <tr data-winner-id="${(w.id || '').replace(/"/g, '&quot;')}">
                 <td>${i + 1}</td>
                 <td>${posLabel(w.position || 1)}</td>
+                <td>
+                    <div class="winner-photo-cell">
+                        ${w.teamPhoto ? `<img src="${photoSrc}" alt="" class="winner-thumb" style="width:48px;height:48px;object-fit:cover;border-radius:8px;">` : '<span class="no-photo">—</span>'}
+                        <input type="file" id="${inputId}" accept="image/*" style="display:none" onchange="uploadWinnerPhoto(this)">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('${inputId}').click()">📷 ${w.teamPhoto ? 'Change' : 'Upload'}</button>
+                    </div>
+                </td>
                 <td>${escape(w.teamName) || '—'}</td>
                 <td>${escape(w.teamLeader) || '—'}</td>
                 <td>${escape(w.problemStatement) || '—'}</td>
                 <td><button class="btn btn-danger btn-sm" data-id="${escape(w.id)}" onclick="deleteWinner(this.getAttribute('data-id'))">🗑 Delete</button></td>
             </tr>
-        `).join('');
+        `}).join('');
         tableEl.style.display = 'block';
     } catch (err) {
         loadingEl.style.display = 'none';
@@ -1155,6 +1174,16 @@ function onWinnerTeamSelect() {
     document.getElementById('winnerMembers').value = ((r.team_members || r.teamMembers) || '').replace(/\|/g, ', ');
 }
 
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        if (!file || !file.type.startsWith('image/')) { resolve(null); return; }
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = () => reject(new Error('Failed to read file'));
+        r.readAsDataURL(file);
+    });
+}
+
 async function submitWinner(e) {
     e.preventDefault();
     const position = parseInt(document.getElementById('winnerPosition').value, 10) || 1;
@@ -1162,15 +1191,20 @@ async function submitWinner(e) {
     const teamLeader = document.getElementById('winnerTeamLeader').value.trim();
     const problemStatement = document.getElementById('winnerProblem').value.trim();
     const teamMembers = document.getElementById('winnerMembers').value.trim();
+    const photoInput = document.getElementById('winnerTeamPhoto');
     if (!teamName || !teamLeader) {
         showNotification('Team name and team leader are required.', true);
         return;
+    }
+    let teamPhoto = null;
+    if (photoInput && photoInput.files && photoInput.files[0]) {
+        try { teamPhoto = await fileToBase64(photoInput.files[0]); } catch (_) {}
     }
     try {
         const res = await fetch('/api/admin/winners', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ position, teamName, teamLeader, problemStatement, teamMembers })
+            body: JSON.stringify({ position, teamName, teamLeader, problemStatement, teamMembers, teamPhoto })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to add winner');
@@ -1178,11 +1212,38 @@ async function submitWinner(e) {
         document.getElementById('addWinnerForm').reset();
         document.getElementById('winnerSelectTeam').value = '';
         document.getElementById('winnerPosition').value = '1';
+        document.getElementById('winnerTeamPhoto').value = '';
         onWinnerTeamSelect();
         loadWinnersAdmin();
     } catch (err) {
         showNotification(err.message || 'Failed to add winner', true);
     }
+}
+
+async function uploadWinnerPhoto(fileInput) {
+    const file = fileInput && fileInput.files && fileInput.files[0];
+    if (!file || !file.type.startsWith('image/')) {
+        showNotification('Please select an image file.', true);
+        return;
+    }
+    const row = fileInput.closest('tr');
+    const id = row ? row.getAttribute('data-winner-id') : null;
+    if (!id) { showNotification('Could not find winner.', true); return; }
+    try {
+        const teamPhoto = await fileToBase64(file);
+        const res = await fetch('/api/admin/winners/' + encodeURIComponent(id), {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ teamPhoto })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to update photo');
+        showNotification('Team photo updated.');
+        loadWinnersAdmin();
+    } catch (err) {
+        showNotification(err.message || 'Failed to upload photo', true);
+    }
+    fileInput.value = '';
 }
 
 async function deleteWinner(id) {
