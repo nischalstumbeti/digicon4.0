@@ -1069,10 +1069,10 @@ function renderProblemSelections(registrations) {
         return;
     }
     if (emptyEl) emptyEl.style.display = 'none';
-    confirmed.sort((a, b) => String(a.team_name || '').localeCompare(String(b.team_name || '')));
+    confirmed.sort((a, b) => String((a && a.team_name) || '').localeCompare(String((b && b.team_name) || '')));
     tableEl.style.display = 'block';
     const escape = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    tbody.innerHTML = confirmed.map(r => {
+    tbody.innerHTML = confirmed.filter(r => r).map(r => {
         const safeTeamNum = escape(r.team_number);
         return `<tr>
             <td>${escape(r.team_name) || '—'}</td>
@@ -1102,13 +1102,14 @@ async function loadWinnersAdmin() {
             fetch('/api/registrations', { cache: 'no-store' })
         ]);
         const winners = await winnersRes.json();
-        const registrations = await regsRes.json();
-        const confirmed = (registrations || []).filter(r => r.problem_title && r.problem_title !== 'Pending');
-        const winnerTeamNames = new Set((winners || []).map(w => String(w.teamName || '').toLowerCase().trim()));
-        eligibleRegistrationsCache = confirmed.filter(r => !winnerTeamNames.has(String(r.team_name || '').toLowerCase().trim()));
+        const regsData = await regsRes.json();
+        const regsList = Array.isArray(regsData) ? regsData : [];
+        const confirmed = regsList.filter(r => r && (r.problem_title || r.problemStatement) && (r.problem_title || r.problemStatement) !== 'Pending');
+        const winnerTeamNames = new Set((Array.isArray(winners) ? winners : []).map(w => String((w && w.teamName) || '').toLowerCase().trim()));
+        eligibleRegistrationsCache = confirmed.filter(r => r && !winnerTeamNames.has(String((r.team_name || r.teamName) || '').toLowerCase().trim()));
         if (selectEl) {
             selectEl.innerHTML = '<option value="">— Select a registered team —</option>' +
-                eligibleRegistrationsCache.map((r, i) => `<option value="${i}">${r.team_name || r.team_number || '—'} (${r.team_leader || '—'}) — ${r.problem_title || '—'}</option>`).join('');
+                eligibleRegistrationsCache.map((r, i) => r ? `<option value="${i}">${(r.team_name || r.teamName || r.team_number) || '—'} (${(r.team_leader || r.teamLeader) || '—'}) — ${(r.problem_title || r.problemStatement) || '—'}</option>` : '').join('');
         }
         loadingEl.style.display = 'none';
         if (!Array.isArray(winners) || winners.length === 0) {
@@ -1139,7 +1140,7 @@ async function loadWinnersAdmin() {
 function onWinnerTeamSelect() {
     const selectEl = document.getElementById('winnerSelectTeam');
     const idx = selectEl ? parseInt(selectEl.value, 10) : -1;
-    if (idx < 0 || idx >= eligibleRegistrationsCache.length) {
+    if (idx < 0 || idx >= (eligibleRegistrationsCache || []).length) {
         document.getElementById('winnerTeamName').value = '';
         document.getElementById('winnerTeamLeader').value = '';
         document.getElementById('winnerProblem').value = '';
@@ -1147,10 +1148,11 @@ function onWinnerTeamSelect() {
         return;
     }
     const r = eligibleRegistrationsCache[idx];
-    document.getElementById('winnerTeamName').value = r.team_name || '';
-    document.getElementById('winnerTeamLeader').value = r.team_leader || '';
-    document.getElementById('winnerProblem').value = r.problem_title || '';
-    document.getElementById('winnerMembers').value = (r.team_members || '').replace(/\|/g, ', ');
+    if (!r) return;
+    document.getElementById('winnerTeamName').value = (r.team_name || r.teamName) || '';
+    document.getElementById('winnerTeamLeader').value = (r.team_leader || r.teamLeader) || '';
+    document.getElementById('winnerProblem').value = (r.problem_title || r.problemStatement) || '';
+    document.getElementById('winnerMembers').value = ((r.team_members || r.teamMembers) || '').replace(/\|/g, ', ');
 }
 
 async function submitWinner(e) {
@@ -1278,7 +1280,7 @@ async function exportRegistrationsToCSV() {
             const s = String(v ?? '').replace(/"/g, '""');
             return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s}"` : s;
         };
-        const rows = registrations.map((r, i) => [
+        const rows = (registrations || []).filter(r => r).map((r, i) => [
             i + 1,
             r.team_number || '',
             r.team_name || '',
@@ -1308,7 +1310,7 @@ async function exportRegistrationsToExcel() {
             return;
         }
         const headers = ['#', 'Team #', 'Team Name', 'Team Leader', 'Team Members', 'Problem Statement'];
-        const rows = registrations.map((r, i) => [
+        const rows = (registrations || []).filter(r => r).map((r, i) => [
             i + 1,
             r.team_number || '',
             r.team_name || '',
@@ -1333,14 +1335,14 @@ async function exportProblemSelectionsToExcel() {
     try {
         const res = await fetch('/api/registrations', { cache: 'no-store' });
         const registrations = await res.json();
-        const confirmed = (registrations || []).filter(r => r.problem_title && r.problem_title !== 'Pending');
+        const confirmed = (registrations || []).filter(r => r && r.problem_title && r.problem_title !== 'Pending');
         if (confirmed.length === 0) {
             showNotification('No problem selections to export.', true);
             return;
         }
         const byProblem = {};
         confirmed.forEach(r => {
-            const key = r.problem_title || 'Unknown';
+            const key = (r && r.problem_title) || 'Unknown';
             if (!byProblem[key]) byProblem[key] = [];
             byProblem[key].push(r);
         });
@@ -1351,7 +1353,7 @@ async function exportProblemSelectionsToExcel() {
             html += '<h3>' + String(idx + 1) + '. ' + String(probTitle).replace(/</g, '&lt;') + ' (' + teams.length + ' team(s))</h3>';
             html += '<table border="1"><thead><tr>' + headers.map(h => '<th>' + String(h).replace(/</g, '&lt;') + '</th>').join('') + '</tr></thead><tbody>';
             teams.forEach((r, i) => {
-                const row = [i + 1, r.team_number || '', r.team_name || '', r.team_leader || '', (r.team_members || '').replace(/\|/g, ', ')];
+                const row = [i + 1, (r && r.team_number) || '', (r && r.team_name) || '', (r && r.team_leader) || '', ((r && r.team_members) || '').replace(/\|/g, ', ')];
                 html += '<tr>' + row.map(c => '<td>' + String(c ?? '').replace(/</g, '&lt;') + '</td>').join('') + '</tr>';
             });
             html += '</tbody></table><br/>';
@@ -1697,22 +1699,23 @@ async function loadTeamsRegistrations() {
         if (registrations.length === 0) {
             emptyEl.style.display = 'block';
         } else {
-            registrations.sort((a, b) => {
-                const na = parseInt(a.team_number, 10), nb = parseInt(b.team_number, 10);
-                return (!isNaN(na) && !isNaN(nb)) ? na - nb : String(a.team_number).localeCompare(String(b.team_number));
+            const validRegs = registrations.filter(r => r);
+            validRegs.sort((a, b) => {
+                const na = parseInt(a && a.team_number, 10), nb = parseInt(b && b.team_number, 10);
+                return (!isNaN(na) && !isNaN(nb)) ? na - nb : String((a && a.team_number) || '').localeCompare(String((b && b.team_number) || ''));
             });
             tableEl.style.display = 'block';
             const escape = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-            bodyEl.innerHTML = registrations.map((r, i) => {
-                const teamNum = escape(r.team_number);
-                const teamMembers = escape((r.team_members || '').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+            bodyEl.innerHTML = validRegs.map((r, i) => {
+                const teamNum = escape(r && r.team_number);
+                const teamMembers = escape(((r && r.team_members) || '').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
                 return `<tr>
                     <td>${i + 1}</td>
                     <td>${teamNum || '—'}</td>
-                    <td>${escape(r.team_name) || '—'}</td>
-                    <td>${escape(r.team_leader) || '—'}</td>
+                    <td>${escape(r && r.team_name) || '—'}</td>
+                    <td>${escape(r && r.team_leader) || '—'}</td>
                     <td>${teamMembers || '—'}</td>
-                    <td>${escape(r.problem_title) || '—'}</td>
+                    <td>${escape(r && r.problem_title) || '—'}</td>
                     <td><button class="btn btn-danger btn-sm" data-team-num="${teamNum}" onclick="deleteRegistration(this.getAttribute('data-team-num'))">🗑 Delete</button></td>
                 </tr>`;
             }).join('');
