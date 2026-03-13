@@ -18,7 +18,8 @@ class MongoStore {
     const regs = this.db.collection(`${this.collectionPrefix}registrations`);
     const teams = this.db.collection(`${this.collectionPrefix}teams`);
     const participants = this.db.collection(`${this.collectionPrefix}participants`);
-    this.collections = { ps, regs, teams, participants };
+    const winners = this.db.collection(`${this.collectionPrefix}winners`);
+    this.collections = { ps, regs, teams, participants, winners };
     // indexes
     await ps.createIndex({ id: 1 }, { unique: true });
     await regs.createIndex({ teamNumber: 1 }, { unique: true });
@@ -26,6 +27,7 @@ class MongoStore {
     await teams.createIndex({ teamNumber: 1 }, { unique: true });
     await participants.createIndex({ name: 1 });
     await participants.createIndex({ regNo: 1 });
+    await winners.createIndex({ position: 1 });
     // seed defaults if empty
     const count = await ps.estimatedDocumentCount();
     if (count === 0) {
@@ -543,6 +545,46 @@ class MongoStore {
       { upsert: true }
     );
     return released;
+  }
+
+  async getAllWinners() {
+    if (!this.collections) await this.init();
+    const { winners } = this.collections;
+    return (await winners.find({}).sort({ position: 1 }).toArray()).map(w => ({
+      id: w._id.toString(),
+      position: w.position,
+      teamName: w.teamName || '',
+      teamLeader: w.teamLeader || '',
+      problemStatement: w.problemStatement || '',
+      teamMembers: w.teamMembers || ''
+    }));
+  }
+
+  async addWinner(winner) {
+    if (!this.collections) await this.init();
+    const { winners } = this.collections;
+    const doc = {
+      position: Number(winner.position) || 1,
+      teamName: winner.teamName || '',
+      teamLeader: winner.teamLeader || '',
+      problemStatement: winner.problemStatement || '',
+      teamMembers: winner.teamMembers || '',
+      createdAt: new Date().toISOString()
+    };
+    const res = await winners.insertOne(doc);
+    return { id: res.insertedId.toString(), changes: 1 };
+  }
+
+  async deleteWinner(id) {
+    if (!this.collections) await this.init();
+    const { winners } = this.collections;
+    const { ObjectId } = require('mongodb');
+    try {
+      const res = await winners.deleteOne({ _id: new ObjectId(id) });
+      return { changes: res.deletedCount };
+    } catch (_) {
+      return { changes: 0 };
+    }
   }
 }
 

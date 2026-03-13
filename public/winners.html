@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Winners - DIGICON 4.0</title>
+  <link rel="stylesheet" href="prism-theme.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; width: 100%; overflow-x: hidden; display: flex; flex-direction: column; }
+    .prism-body { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; }
+    .header-logos {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 20px; gap: 20px;
+      border-bottom: 1px solid rgba(230, 57, 70, 0.2);
+      background: rgba(10, 10, 10, 0.4);
+      position: relative; z-index: 2;
+    }
+    .header-logos img { height: 40px; width: auto; object-fit: contain; filter: brightness(0.95); }
+    .header-logos .header-left { display: flex; align-items: center; gap: 16px; flex: 1; }
+    .header-logos .header-center { display: flex; justify-content: center; flex: 1; }
+    .header-logos .header-right { flex: 1; display: flex; justify-content: flex-end; align-items: center; }
+    .header-logos .euphoria-banner { height: 85px; max-width: 700px; }
+    .header-logos .header-side-logo { height: 60px; width: auto; object-fit: contain; }
+    .back-btn {
+      position: fixed; top: 24px; left: 24px; z-index: 10000;
+      background: #121212; color: #e63946; border: 1px solid rgba(230, 57, 70, 0.5);
+      border-radius: 4px; font-size: 1rem; font-weight: 600; padding: 10px 24px;
+      cursor: pointer; font-family: Verdana, Geneva, sans-serif;
+      transition: all 0.2s;
+    }
+    .back-btn:hover { background: rgba(230, 57, 70, 0.1); box-shadow: 0 0 20px rgba(230, 57, 70, 0.3); }
+    .main {
+      flex: 1; padding: 80px 24px 40px; max-width: 900px; margin: 0 auto; width: 100%;
+      position: relative; z-index: 1;
+    }
+    .main-title {
+      font-family: Verdana, Geneva, sans-serif; font-size: clamp(2.5rem, 6vw, 4rem);
+      letter-spacing: 8px; color: #e63946; margin-bottom: 8px; text-align: center;
+      text-shadow: 0 0 30px rgba(230, 57, 70, 0.3);
+    }
+    .subtitle { font-size: 1rem; color: #9ca3af; margin-bottom: 36px; text-align: center; letter-spacing: 3px; }
+    .winners-grid {
+      display: flex; flex-direction: column; gap: 24px; align-items: stretch;
+    }
+    .winner-card {
+      background: rgba(18, 18, 18, 0.9);
+      border: 1px solid rgba(230, 57, 70, 0.25);
+      border-radius: 12px;
+      padding: 28px 32px;
+      transition: all 0.2s;
+    }
+    .winner-card:hover { border-color: rgba(230, 57, 70, 0.5); box-shadow: 0 0 30px rgba(230, 57, 70, 0.1); }
+    .winner-card .position-badge {
+      display: inline-block; background: #e63946; color: #fff;
+      padding: 6px 16px; border-radius: 6px; font-size: 0.9rem; font-weight: 700;
+      letter-spacing: 2px; margin-bottom: 16px;
+    }
+    .winner-card h3 { color: #e63946; font-size: 1.4rem; margin: 0 0 8px 0; font-family: Verdana, Geneva, sans-serif; }
+    .winner-card .team-leader { color: #9ca3af; font-size: 1rem; margin-bottom: 8px; }
+    .winner-card .problem { color: #e8e8e8; font-size: 0.95rem; margin-bottom: 4px; }
+    .winner-card .members { color: #6b7280; font-size: 0.9rem; }
+    .winners-empty {
+      text-align: center; padding: 60px 24px; color: #9ca3af;
+      background: rgba(18, 18, 18, 0.6); border: 1px solid rgba(230, 57, 70, 0.2);
+      border-radius: 12px;
+    }
+    .winners-empty p { font-size: 1.1rem; margin: 0; }
+    .site-footer { position: relative; z-index: 1; }
+    @media (max-width: 768px) {
+      .header-logos { gap: 12px; padding: 8px 16px; }
+      .header-logos img { height: 32px; }
+      .header-logos .euphoria-banner { height: 60px; max-width: 320px; }
+      .header-logos .header-side-logo { height: 45px; }
+      .main { padding: 70px 16px 32px; }
+      .winner-card { padding: 20px 24px; }
+    }
+  </style>
+</head>
+<body class="prism-body">
+  <video class="bg-video" autoplay muted loop playsinline>
+    <source src="/bg-video.mp4" type="video/mp4">
+  </video>
+  <div class="video-overlay"></div>
+  <button class="back-btn" onclick="window.location.href='/'">&#8592; Back</button>
+  <header class="header-logos">
+    <div class="header-left">
+      <img src="kalasalingam-logo.png" alt="Kalasalingam Academy of Research and Education" class="header-side-logo" />
+      <img src="kare-acm-logo.png" alt="KARE ACM SIGBED Chapter" class="header-side-logo" />
+    </div>
+    <div class="header-center">
+      <img src="euphoria-logo.png" alt="EUPHORIA" class="euphoria-banner" />
+    </div>
+    <div class="header-right">
+      <img src="acm-logo.png" alt="ACM" class="header-side-logo" />
+    </div>
+  </header>
+  <div class="main">
+    <h1 class="main-title">WINNERS</h1>
+    <p class="subtitle">DIGICON 4.0 — Congratulations to our winners!</p>
+    <div id="winnersGrid" class="winners-grid"></div>
+    <div id="winnersEmpty" class="winners-empty" style="display: none;">
+      <p>Winners will be announced soon. Stay tuned!</p>
+    </div>
+  </div>
+  <footer class="site-footer">
+    <div class="footer-marquee">
+      <span class="footer-marquee-inner">DESIGNED AND DEVELOPED WITH ♥, KARE ACM SIGBED STUDENT CHAPTER</span>
+    </div>
+  </footer>
+  <script>
+    const posLabels = { 1: '1st', 2: '2nd', 3: '3rd' };
+    function posLabel(n) { return posLabels[n] || (n + 'th'); }
+    async function loadWinners() {
+      try {
+        const res = await fetch('/api/winners', { cache: 'no-store' });
+        const winners = await res.json();
+        const grid = document.getElementById('winnersGrid');
+        const empty = document.getElementById('winnersEmpty');
+        if (!Array.isArray(winners) || winners.length === 0) {
+          grid.style.display = 'none';
+          empty.style.display = 'block';
+          return;
+        }
+        empty.style.display = 'none';
+        grid.style.display = 'flex';
+        grid.innerHTML = winners.map(w => `
+          <div class="winner-card">
+            <span class="position-badge">${posLabel(w.position || 1)} Place</span>
+            <h3>${escapeHtml(w.teamName || '—')}</h3>
+            <div class="team-leader">Team Leader: ${escapeHtml(w.teamLeader || '—')}</div>
+            ${w.problemStatement ? `<div class="problem">Problem: ${escapeHtml(w.problemStatement)}</div>` : ''}
+            ${w.teamMembers ? `<div class="members">Members: ${escapeHtml(w.teamMembers.replace(/\|/g, ', '))}</div>` : ''}
+          </div>
+        `).join('');
+      } catch (err) {
+        document.getElementById('winnersEmpty').style.display = 'block';
+        document.getElementById('winnersEmpty').innerHTML = '<p>Unable to load winners. Please try again later.</p>';
+      }
+    }
+    function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    loadWinners();
+    const es = new EventSource('/api/events');
+    es.onmessage = (e) => { try { const p = JSON.parse(e.data); if (p.type === 'winners') loadWinners(); } catch (_) {} };
+    es.onerror = () => { try { es.close(); } catch (_) {} };
+  </script>
+</body>
+</html>

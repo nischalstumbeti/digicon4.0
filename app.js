@@ -665,9 +665,53 @@ app.post('/api/admin/teams/upload', async (req, res) => {
 // Static files (after API routes so /api/* is handled first)
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Winners API (public)
+app.get('/api/winners', async (req, res) => {
+  try {
+    res.set({ 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
+    const winners = typeof db.getAllWinners === 'function' ? await db.getAllWinners() : [];
+    res.json(winners);
+  } catch (err) {
+    console.error('Error fetching winners:', err);
+    res.status(500).json([]);
+  }
+});
+
+// Admin: add winner
+app.post('/api/admin/winners', async (req, res) => {
+  try {
+    const { position, teamName, teamLeader, problemStatement, teamMembers } = req.body || {};
+    if (!teamName || !teamLeader) {
+      return res.status(400).json({ error: 'Team name and team leader are required' });
+    }
+    const result = await db.addWinner({ position: position || 1, teamName, teamLeader, problemStatement: problemStatement || '', teamMembers: teamMembers || '' });
+    const winners = await db.getAllWinners();
+    broadcastUpdate('winners', { winners });
+    res.json({ ok: true, id: result.id, winners });
+  } catch (error) {
+    console.error('Error adding winner:', error);
+    res.status(500).json({ error: error.message || 'Failed to add winner' });
+  }
+});
+
+// Admin: delete winner
+app.delete('/api/admin/winners/:id', async (req, res) => {
+  try {
+    const result = await db.deleteWinner(req.params.id);
+    if (result.changes === 0) return res.status(404).json({ error: 'Winner not found' });
+    const winners = await db.getAllWinners();
+    broadcastUpdate('winners', { winners });
+    res.json({ ok: true, winners });
+  } catch (error) {
+    console.error('Error deleting winner:', error);
+    res.status(500).json({ error: error.message || 'Failed to delete winner' });
+  }
+});
+
 // Frontend routes
 app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'home.html')); });
 app.get('/problem', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'problem.html')); });
+app.get('/winners', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'winners.html')); });
 app.get('/admin', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'admin.html')); });
 app.get('/admin-login', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'admin-login.html')); });
 app.post('/api/admin/login', express.urlencoded({ extended: false }), (req, res) => {

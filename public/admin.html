@@ -443,6 +443,10 @@
                 <span class="nav-icon">📋</span>
                 <span>Teams Registration</span>
             </div>
+            <div class="nav-item" data-page="winners" onclick="navigateTo('winners')">
+                <span class="nav-icon">🏆</span>
+                <span>Winners</span>
+            </div>
         </nav>
         <div class="sidebar-footer">
             <button class="logout-btn" onclick="logout()">Logout</button>
@@ -790,6 +794,75 @@ Jane Smith,21CS002,KARE,Madurai,jane@mail.com,9876543211,CSE,F,3</div>
                 </div>
             </div><!-- /page-teams-registration -->
 
+            <!-- WINNERS PAGE -->
+            <div class="page" id="page-winners">
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-header-left">🏆 Add Winner</div>
+                    </div>
+                    <div class="section-body">
+                        <form id="addWinnerForm" onsubmit="submitWinner(event)" style="display: grid; gap: 16px; max-width: 600px;">
+                            <div class="form-row">
+                                <div class="field">
+                                    <label>Position *</label>
+                                    <input type="number" id="winnerPosition" value="1" min="1" max="20" required>
+                                </div>
+                                <div class="field">
+                                    <label>Team Name *</label>
+                                    <input type="text" id="winnerTeamName" placeholder="e.g. Circuit Legends" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="field">
+                                    <label>Team Leader *</label>
+                                    <input type="text" id="winnerTeamLeader" placeholder="Leader name" required>
+                                </div>
+                                <div class="field">
+                                    <label>Problem Statement</label>
+                                    <input type="text" id="winnerProblem" placeholder="Problem title (optional)">
+                                </div>
+                            </div>
+                            <div class="form-row full">
+                                <div class="field">
+                                    <label>Team Members</label>
+                                    <input type="text" id="winnerMembers" placeholder="Member1, Member2 (optional)">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-teal">Add Winner</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-header-left">📋 Winners List</div>
+                        <div class="section-header-actions">
+                            <a href="/winners" target="_blank" class="btn btn-outline btn-sm">👁 View Winners Page</a>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div id="winnersAdminLoading" class="loading-text">Loading…</div>
+                        <div id="winnersAdminTable" style="display:none;">
+                            <div class="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Position</th>
+                                            <th>Team Name</th>
+                                            <th>Team Leader</th>
+                                            <th>Problem</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="winnersAdminBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="winnersAdminEmpty" style="display:none; padding: 32px; text-align: center; color: #666;">No winners added yet.</div>
+                    </div>
+                </div>
+            </div><!-- /page-winners -->
+
         </div><!-- /page-content -->
         <footer class="site-footer">
             <div class="footer-marquee">
@@ -835,7 +908,7 @@ function logout() {
 }
 
 /* ── NAVIGATION ────────────────────────────────────────── */
-const pageTitles = { home: 'Home', 'add-problems': 'Add Problem Statements', 'add-teams': 'Add Teams', 'teams-registration': 'Teams Registration' };
+const pageTitles = { home: 'Home', 'add-problems': 'Add Problem Statements', 'add-teams': 'Add Teams', 'teams-registration': 'Teams Registration', winners: 'Winners' };
 
 function navigateTo(page) {
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -848,6 +921,7 @@ function navigateTo(page) {
     if (page === 'home') fetchData();
     if (page === 'add-teams') loadParticipantsList();
     if (page === 'teams-registration') loadTeamsRegistrations();
+    if (page === 'winners') loadWinnersAdmin();
 }
 
 /* ── ADD OPTION SELECTION ─────────────────────────────── */
@@ -996,6 +1070,84 @@ function renderProblemSelections(registrations) {
             <td><button class="btn btn-danger btn-sm" data-team-num="${safeTeamNum}" onclick="deleteRegistration(this.getAttribute('data-team-num'))">🗑 Delete</button></td>
         </tr>`;
     }).join('');
+}
+
+/* ── WINNERS ADMIN ─────────────────────────────────────── */
+async function loadWinnersAdmin() {
+    const loadingEl = document.getElementById('winnersAdminLoading');
+    const tableEl = document.getElementById('winnersAdminTable');
+    const emptyEl = document.getElementById('winnersAdminEmpty');
+    const tbody = document.getElementById('winnersAdminBody');
+    if (!tbody) return;
+    try {
+        loadingEl.style.display = 'block';
+        tableEl.style.display = 'none';
+        emptyEl.style.display = 'none';
+        const res = await fetch('/api/winners', { cache: 'no-store' });
+        const winners = await res.json();
+        loadingEl.style.display = 'none';
+        if (!Array.isArray(winners) || winners.length === 0) {
+            emptyEl.style.display = 'block';
+            return;
+        }
+        const escape = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        const posLabels = { 1: '1st', 2: '2nd', 3: '3rd' };
+        const posLabel = (n) => posLabels[n] || (n + 'th');
+        tbody.innerHTML = winners.map((w, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td>${posLabel(w.position || 1)}</td>
+                <td>${escape(w.teamName) || '—'}</td>
+                <td>${escape(w.teamLeader) || '—'}</td>
+                <td>${escape(w.problemStatement) || '—'}</td>
+                <td><button class="btn btn-danger btn-sm" data-id="${escape(w.id)}" onclick="deleteWinner(this.getAttribute('data-id'))">🗑 Delete</button></td>
+            </tr>
+        `).join('');
+        tableEl.style.display = 'block';
+    } catch (err) {
+        loadingEl.style.display = 'none';
+        emptyEl.style.display = 'block';
+        emptyEl.textContent = 'Failed to load: ' + err.message;
+    }
+}
+
+async function submitWinner(e) {
+    e.preventDefault();
+    const position = parseInt(document.getElementById('winnerPosition').value, 10) || 1;
+    const teamName = document.getElementById('winnerTeamName').value.trim();
+    const teamLeader = document.getElementById('winnerTeamLeader').value.trim();
+    const problemStatement = document.getElementById('winnerProblem').value.trim();
+    const teamMembers = document.getElementById('winnerMembers').value.trim();
+    if (!teamName || !teamLeader) {
+        showNotification('Team name and team leader are required.', true);
+        return;
+    }
+    try {
+        const res = await fetch('/api/admin/winners', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ position, teamName, teamLeader, problemStatement, teamMembers })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to add winner');
+        showNotification('Winner added successfully.');
+        document.getElementById('addWinnerForm').reset();
+        document.getElementById('winnerPosition').value = '1';
+        loadWinnersAdmin();
+    } catch (err) {
+        showNotification(err.message || 'Failed to add winner', true);
+    }
+}
+
+async function deleteWinner(id) {
+    showConfirmModal('Confirm Delete', 'Are you sure you want to remove this winner?', async () => {
+        try {
+            const res = await fetch(`/api/admin/winners/${encodeURIComponent(id)}`, { method: 'DELETE', cache: 'no-store' });
+            if (!res.ok) { const e = await res.json(); throw new Error(e.error || res.statusText); }
+            showNotification('Winner removed.');
+            loadWinnersAdmin();
+        } catch (err) { showNotification('Delete failed: ' + err.message, true); }
+    });
 }
 
 /* ── CONFIRM MODAL ─────────────────────────────────────── */
@@ -1527,6 +1679,7 @@ function connectSSE() {
                 fetchData();
                 loadTeamsRegistrations();
             }
+            if (d.type === 'winners') loadWinnersAdmin();
         } catch (_) {}
     };
     evtSrc.onerror = () => {

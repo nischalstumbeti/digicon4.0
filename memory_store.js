@@ -9,6 +9,7 @@ class MemoryStore {
     this.registrations = [];
     this.teams = [];
     this.participants = [];
+    this.winners = [];
     this.evaluationCriteria = null;
     this.problemStatementReleased = false;
   }
@@ -225,7 +226,39 @@ class MemoryStore {
     this.registrations = [];
     this.teams = [];
     this.participants = [];
+    this.winners = [];
     return true;
+  }
+
+  async getAllWinners() {
+    return [...this.winners].sort((a, b) => (a.position || 0) - (b.position || 0)).map(w => ({
+      id: w.id,
+      position: w.position,
+      teamName: w.teamName || '',
+      teamLeader: w.teamLeader || '',
+      problemStatement: w.problemStatement || '',
+      teamMembers: w.teamMembers || ''
+    }));
+  }
+
+  async addWinner(winner) {
+    const id = 'w' + Date.now();
+    this.winners.push({
+      id,
+      position: Number(winner.position) || 1,
+      teamName: winner.teamName || '',
+      teamLeader: winner.teamLeader || '',
+      problemStatement: winner.problemStatement || '',
+      teamMembers: winner.teamMembers || ''
+    });
+    return { id, changes: 1 };
+  }
+
+  async deleteWinner(id) {
+    const idx = this.winners.findIndex(w => w.id === id);
+    if (idx === -1) return { changes: 0 };
+    this.winners.splice(idx, 1);
+    return { changes: 1 };
   }
 
   async getTeamByNumber(teamNumber) {
