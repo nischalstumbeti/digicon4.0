@@ -528,6 +528,40 @@ app.get('/api/export/registrations/pdf', async (req, res) => {
   }
 });
 
+// Export Problem Selections (grouped by problem statement)
+app.get('/api/export/problem-selections/pdf', async (req, res) => {
+  try {
+    const registrations = await db.getAllRegistrations();
+    const confirmed = (registrations || []).filter(r => r.problem_title && r.problem_title !== 'Pending');
+    if (confirmed.length === 0) {
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Problem Selections Report</title><style>body{font-family:Arial;padding:24px;max-width:900px;margin:0 auto}h1{color:#c10016;border-bottom:2px solid #c10016;padding-bottom:8px}.empty{color:#666;font-size:1.1rem}</style></head><body><h1>Problem Statements Selection Report</h1><p class="empty">No problem selections yet. Teams will appear here after they select and confirm a problem.</p><p style="margin-top:20px;color:#888;font-size:0.9rem;">Generated: ${new Date().toLocaleString('en-IN')}</p></body></html>`;
+      res.setHeader('Content-Type', 'text/html');
+      res.setHeader('Content-Disposition', 'inline; filename="problem-selections-report.html"');
+      return res.send(html);
+    }
+    const byProblem = {};
+    confirmed.forEach(r => {
+      const key = r.problem_title || 'Unknown';
+      if (!byProblem[key]) byProblem[key] = [];
+      byProblem[key].push(r);
+    });
+    const problemOrder = Object.keys(byProblem).sort();
+    let sections = '';
+    problemOrder.forEach((probTitle, idx) => {
+      const teams = byProblem[probTitle];
+      const rows = teams.map((r, i) => `<tr><td>${i + 1}</td><td>${r.team_number || '—'}</td><td>${r.team_name || '—'}</td><td>${r.team_leader || '—'}</td><td>${(r.team_members || '').replace(/</g, '&lt;').replace(/\|/g, ', ')}</td><td>${new Date(r.registration_date_time).toLocaleString('en-IN')}</td></tr>`).join('');
+      sections += `<div class="problem-section"><h2>${idx + 1}. ${probTitle}</h2><p class="team-count">${teams.length} team(s) selected</p><table><thead><tr><th>#</th><th>Team #</th><th>Team Name</th><th>Team Leader</th><th>Team Members</th><th>Registered At</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    });
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Problem Selections Report</title><style>body{font-family:Arial,sans-serif;padding:24px;max-width:900px;margin:0 auto}h1{color:#c10016;border-bottom:2px solid #c10016;padding-bottom:8px;margin-bottom:24px}.problem-section{margin-bottom:32px;page-break-inside:avoid}.problem-section h2{color:#333;font-size:1.1rem;margin-bottom:4px}.team-count{color:#666;font-size:0.9rem;margin-bottom:12px}table{width:100%;border-collapse:collapse;font-size:0.9rem}th,td{border:1px solid #ddd;padding:8px 10px;text-align:left}th{background:#c10016;color:#fff;font-weight:600}tbody tr:nth-child(even){background:#f9f9f9}.meta{color:#888;font-size:0.85rem;margin-top:24px;padding-top:16px;border-top:1px solid #eee}</style></head><body><h1>Problem Statements Selection Report</h1><p style="color:#666;margin-bottom:24px;">DIGICON 4.0 — Teams grouped by their selected problem statement.</p>${sections}<p class="meta">Generated: ${new Date().toLocaleString('en-IN')} &nbsp;| &nbsp;Total: ${confirmed.length} team(s)</p></body></html>`;
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Content-Disposition', 'inline; filename="problem-selections-report.html"');
+    res.send(html);
+  } catch (error) {
+    console.error('Error exporting problem selections PDF:', error);
+    res.status(500).json({ error: 'Failed to export problem selections PDF' });
+  }
+});
+
 app.get('/api/export/problem-statements/pdf', async (req, res) => {
   try {
     const problems = (await db.getAllProblemStatements()).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
