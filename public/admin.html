@@ -801,7 +801,16 @@ Jane Smith,21CS002,KARE,Madurai,jane@mail.com,9876543211,CSE,F,3</div>
                         <div class="section-header-left">🏆 Add Winner</div>
                     </div>
                     <div class="section-body">
+                        <p style="color: #9ca3af; margin-bottom: 16px; font-size: 0.9rem;">Select a team from registered teams (teams that have confirmed their problem statement). Data is fetched from the database.</p>
                         <form id="addWinnerForm" onsubmit="submitWinner(event)" style="display: grid; gap: 16px; max-width: 600px;">
+                            <div class="form-row full">
+                                <div class="field">
+                                    <label>Select Team from Registrations *</label>
+                                    <select id="winnerSelectTeam" class="team-select-input" required onchange="onWinnerTeamSelect()">
+                                        <option value="">— Select a registered team —</option>
+                                    </select>
+                                </div>
+                            </div>
                             <div class="form-row">
                                 <div class="field">
                                     <label>Position *</label>
@@ -809,23 +818,23 @@ Jane Smith,21CS002,KARE,Madurai,jane@mail.com,9876543211,CSE,F,3</div>
                                 </div>
                                 <div class="field">
                                     <label>Team Name *</label>
-                                    <input type="text" id="winnerTeamName" placeholder="e.g. Circuit Legends" required>
+                                    <input type="text" id="winnerTeamName" placeholder="Auto-filled from selection" required readonly>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="field">
                                     <label>Team Leader *</label>
-                                    <input type="text" id="winnerTeamLeader" placeholder="Leader name" required>
+                                    <input type="text" id="winnerTeamLeader" placeholder="Auto-filled from selection" required readonly>
                                 </div>
                                 <div class="field">
                                     <label>Problem Statement</label>
-                                    <input type="text" id="winnerProblem" placeholder="Problem title (optional)">
+                                    <input type="text" id="winnerProblem" placeholder="Auto-filled from selection" readonly>
                                 </div>
                             </div>
                             <div class="form-row full">
                                 <div class="field">
                                     <label>Team Members</label>
-                                    <input type="text" id="winnerMembers" placeholder="Member1, Member2 (optional)">
+                                    <input type="text" id="winnerMembers" placeholder="Auto-filled from selection" readonly>
                                 </div>
                             </div>
                             <button type="submit" class="btn btn-teal">Add Winner</button>
@@ -1073,18 +1082,32 @@ function renderProblemSelections(registrations) {
 }
 
 /* ── WINNERS ADMIN ─────────────────────────────────────── */
+let eligibleRegistrationsCache = [];
+
 async function loadWinnersAdmin() {
     const loadingEl = document.getElementById('winnersAdminLoading');
     const tableEl = document.getElementById('winnersAdminTable');
     const emptyEl = document.getElementById('winnersAdminEmpty');
     const tbody = document.getElementById('winnersAdminBody');
+    const selectEl = document.getElementById('winnerSelectTeam');
     if (!tbody) return;
     try {
         loadingEl.style.display = 'block';
         tableEl.style.display = 'none';
         emptyEl.style.display = 'none';
-        const res = await fetch('/api/winners', { cache: 'no-store' });
-        const winners = await res.json();
+        const [winnersRes, regsRes] = await Promise.all([
+            fetch('/api/winners', { cache: 'no-store' }),
+            fetch('/api/registrations', { cache: 'no-store' })
+        ]);
+        const winners = await winnersRes.json();
+        const registrations = await regsRes.json();
+        const confirmed = (registrations || []).filter(r => r.problem_title && r.problem_title !== 'Pending');
+        const winnerTeamNames = new Set((winners || []).map(w => String(w.teamName || '').toLowerCase().trim()));
+        eligibleRegistrationsCache = confirmed.filter(r => !winnerTeamNames.has(String(r.team_name || '').toLowerCase().trim()));
+        if (selectEl) {
+            selectEl.innerHTML = '<option value="">— Select a registered team —</option>' +
+                eligibleRegistrationsCache.map((r, i) => `<option value="${i}">${r.team_name || r.team_number || '—'} (${r.team_leader || '—'}) — ${r.problem_title || '—'}</option>`).join('');
+        }
         loadingEl.style.display = 'none';
         if (!Array.isArray(winners) || winners.length === 0) {
             emptyEl.style.display = 'block';
@@ -1111,6 +1134,23 @@ async function loadWinnersAdmin() {
     }
 }
 
+function onWinnerTeamSelect() {
+    const selectEl = document.getElementById('winnerSelectTeam');
+    const idx = selectEl ? parseInt(selectEl.value, 10) : -1;
+    if (idx < 0 || idx >= eligibleRegistrationsCache.length) {
+        document.getElementById('winnerTeamName').value = '';
+        document.getElementById('winnerTeamLeader').value = '';
+        document.getElementById('winnerProblem').value = '';
+        document.getElementById('winnerMembers').value = '';
+        return;
+    }
+    const r = eligibleRegistrationsCache[idx];
+    document.getElementById('winnerTeamName').value = r.team_name || '';
+    document.getElementById('winnerTeamLeader').value = r.team_leader || '';
+    document.getElementById('winnerProblem').value = r.problem_title || '';
+    document.getElementById('winnerMembers').value = (r.team_members || '').replace(/\|/g, ', ');
+}
+
 async function submitWinner(e) {
     e.preventDefault();
     const position = parseInt(document.getElementById('winnerPosition').value, 10) || 1;
@@ -1132,7 +1172,9 @@ async function submitWinner(e) {
         if (!res.ok) throw new Error(data.error || 'Failed to add winner');
         showNotification('Winner added successfully.');
         document.getElementById('addWinnerForm').reset();
+        document.getElementById('winnerSelectTeam').value = '';
         document.getElementById('winnerPosition').value = '1';
+        onWinnerTeamSelect();
         loadWinnersAdmin();
     } catch (err) {
         showNotification(err.message || 'Failed to add winner', true);
