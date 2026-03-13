@@ -284,12 +284,12 @@
             : '';
           return `
           <div class="winner-card ${getPlaceClass(w.position)}">
-            ${photoHtml}
             <span class="position-badge">${medal}${posLabel(w.position || 1)} Place</span>
             <h3>${escapeHtml(w.teamName || '—')}</h3>
             <div class="team-leader">Team Leader: ${escapeHtml(w.teamLeader || '—')}</div>
-            ${w.problemStatement ? `<div class="problem">Problem: ${escapeHtml(w.problemStatement)}</div>` : ''}
+            ${photoHtml}
             ${w.teamMembers ? `<div class="members">Members: ${escapeHtml(w.teamMembers.replace(/\|/g, ', '))}</div>` : ''}
+            ${w.problemStatement ? `<div class="problem">Problem: ${escapeHtml(w.problemStatement)}</div>` : ''}
           </div>
         `}).join('');
       } catch (err) {
