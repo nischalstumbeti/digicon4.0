@@ -845,6 +845,8 @@ Jane Smith,21CS002,KARE,Madurai,jane@mail.com,9876543211,CSE,F,3</div>
                     <div class="section-header">
                         <div class="section-header-left">📋 Winners List</div>
                         <div class="section-header-actions">
+                            <button class="btn btn-outline btn-sm" onclick="loadWinnersAdmin()">🔄 Refresh</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteAllWinners()">🗑 Delete All</button>
                             <a href="/winners" target="_blank" class="btn btn-outline btn-sm">👁 View Winners Page</a>
                         </div>
                     </div>
@@ -1187,6 +1189,24 @@ async function deleteWinner(id) {
             const res = await fetch(`/api/admin/winners/${encodeURIComponent(id)}`, { method: 'DELETE', cache: 'no-store' });
             if (!res.ok) { const e = await res.json(); throw new Error(e.error || res.statusText); }
             showNotification('Winner removed.');
+            loadWinnersAdmin();
+        } catch (err) { showNotification('Delete failed: ' + err.message, true); }
+    });
+}
+
+async function deleteAllWinners() {
+    showConfirmModal('Delete All Winners', 'Are you sure you want to remove ALL winners? This cannot be undone.', async () => {
+        try {
+            const res = await fetch('/api/winners', { cache: 'no-store' });
+            const winners = await res.json();
+            if (!Array.isArray(winners) || winners.length === 0) {
+                showNotification('No winners to delete.');
+                return;
+            }
+            for (const w of winners) {
+                await fetch(`/api/admin/winners/${encodeURIComponent(w.id)}`, { method: 'DELETE', cache: 'no-store' });
+            }
+            showNotification('All winners removed.');
             loadWinnersAdmin();
         } catch (err) { showNotification('Delete failed: ' + err.message, true); }
     });
