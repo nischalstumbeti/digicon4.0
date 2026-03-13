@@ -547,6 +547,24 @@ class MongoStore {
     return released;
   }
 
+  async getWinnersReleased() {
+    if (!this.collections) await this.init();
+    const settings = this.db.collection(`${this.collectionPrefix}settings`);
+    const doc = await settings.findOne({ id: 'config' });
+    return doc ? Boolean(doc.winnersReleased) : false;
+  }
+
+  async setWinnersReleased(released) {
+    if (!this.collections) await this.init();
+    const settings = this.db.collection(`${this.collectionPrefix}settings`);
+    await settings.updateOne(
+      { id: 'config' },
+      { $set: { id: 'config', winnersReleased: released } },
+      { upsert: true }
+    );
+    return released;
+  }
+
   async getAllWinners() {
     if (!this.collections) await this.init();
     const { winners } = this.collections;

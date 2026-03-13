@@ -665,15 +665,46 @@ app.post('/api/admin/teams/upload', async (req, res) => {
 // Static files (after API routes so /api/* is handled first)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Winners API (public)
+// Winners API (public) - only returns winners when released
 app.get('/api/winners', async (req, res) => {
   try {
     res.set({ 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
-    const winners = typeof db.getAllWinners === 'function' ? await db.getAllWinners() : [];
-    res.json(winners);
+    const released = typeof db.getWinnersReleased === 'function' ? await db.getWinnersReleased() : false;
+    const winners = released && typeof db.getAllWinners === 'function' ? await db.getAllWinners() : [];
+    res.json({ released, winners });
   } catch (err) {
     console.error('Error fetching winners:', err);
-    res.status(500).json([]);
+    res.status(500).json({ released: false, winners: [] });
+  }
+});
+
+// Admin: get winners list and release status (always returns full list)
+app.get('/api/admin/winners', async (req, res) => {
+  try {
+    const released = typeof db.getWinnersReleased === 'function' ? await db.getWinnersReleased() : false;
+    const winners = typeof db.getAllWinners === 'function' ? await db.getAllWinners() : [];
+    res.json({ released, winners });
+  } catch (err) {
+    console.error('Error fetching admin winners:', err);
+    res.status(500).json({ released: false, winners: [] });
+  }
+});
+
+// Admin: toggle winners release (show/hide on public page)
+app.post('/api/admin/winners/release', async (req, res) => {
+  try {
+    if (typeof db.getWinnersReleased !== 'function' || typeof db.setWinnersReleased !== 'function') {
+      return res.status(501).json({ error: 'Release not supported' });
+    }
+    const current = await db.getWinnersReleased();
+    const next = !current;
+    await db.setWinnersReleased(next);
+    const winners = await db.getAllWinners();
+    broadcastUpdate('winners', { released: next, winners });
+    res.json({ ok: true, released: next, winners });
+  } catch (error) {
+    console.error('Error toggling winners release:', error);
+    res.status(500).json({ error: error.message || 'Failed to toggle release' });
   }
 });
 

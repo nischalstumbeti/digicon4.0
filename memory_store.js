@@ -12,6 +12,7 @@ class MemoryStore {
     this.winners = [];
     this.evaluationCriteria = null;
     this.problemStatementReleased = false;
+    this.winnersReleased = false;
   }
 
   async init() {
@@ -406,6 +407,15 @@ class MemoryStore {
 
   async setProblemStatementReleased(released) {
     this.problemStatementReleased = released;
+    return released;
+  }
+
+  async getWinnersReleased() {
+    return Boolean(this.winnersReleased);
+  }
+
+  async setWinnersReleased(released) {
+    this.winnersReleased = released;
     return released;
   }
 }

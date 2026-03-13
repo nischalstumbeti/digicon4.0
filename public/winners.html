@@ -267,10 +267,12 @@
     async function loadWinners() {
       try {
         const res = await fetch('/api/winners', { cache: 'no-store' });
-        const winners = await res.json();
+        const data = await res.json();
+        const winners = Array.isArray(data.winners) ? data.winners : (Array.isArray(data) ? data : []);
+        const released = data && data.released !== undefined ? data.released : true;
         const grid = document.getElementById('winnersGrid');
         const empty = document.getElementById('winnersEmpty');
-        if (!Array.isArray(winners) || winners.length === 0) {
+        if (!released || !Array.isArray(winners) || winners.length === 0) {
           grid.style.display = 'none';
           empty.style.display = 'block';
           return;

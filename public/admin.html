@@ -853,6 +853,7 @@ Jane Smith,21CS002,KARE,Madurai,jane@mail.com,9876543211,CSE,F,3</div>
                     <div class="section-header">
                         <div class="section-header-left">📋 Winners List</div>
                         <div class="section-header-actions">
+                            <button class="btn btn-teal btn-sm" id="releaseWinnersBtn" onclick="toggleWinnersRelease()">Release Winners</button>
                             <button class="btn btn-outline btn-sm" onclick="loadWinnersAdmin()">🔄 Refresh</button>
                             <button class="btn btn-danger btn-sm" onclick="deleteAllWinners()">🗑 Delete All</button>
                             <a href="/winners" target="_blank" class="btn btn-outline btn-sm">👁 View Winners Page</a>
@@ -1107,10 +1108,14 @@ async function loadWinnersAdmin() {
         tableEl.style.display = 'none';
         emptyEl.style.display = 'none';
         const [winnersRes, regsRes] = await Promise.all([
-            fetch('/api/winners', { cache: 'no-store' }),
+            fetch('/api/admin/winners', { cache: 'no-store' }),
             fetch('/api/registrations', { cache: 'no-store' })
         ]);
-        const winners = await winnersRes.json();
+        const winnersData = await winnersRes.json();
+        const winners = Array.isArray(winnersData.winners) ? winnersData.winners : (Array.isArray(winnersData) ? winnersData : []);
+        const released = Boolean(winnersData.released);
+        const releaseBtn = document.getElementById('releaseWinnersBtn');
+        if (releaseBtn) releaseBtn.textContent = released ? 'Hide Winners' : 'Release Winners';
         const regsData = await regsRes.json();
         const regsList = Array.isArray(regsData) ? regsData : [];
         const confirmed = regsList.filter(r => r && (r.problem_title || r.problemStatement) && (r.problem_title || r.problemStatement) !== 'Pending');
@@ -1244,6 +1249,18 @@ async function uploadWinnerPhoto(fileInput) {
         showNotification(err.message || 'Failed to upload photo', true);
     }
     fileInput.value = '';
+}
+
+async function toggleWinnersRelease() {
+    try {
+        const res = await fetch('/api/admin/winners/release', { method: 'POST', cache: 'no-store' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to toggle release');
+        showNotification(data.released ? 'Winners are now visible on the public page.' : 'Winners are now hidden.');
+        loadWinnersAdmin();
+    } catch (err) {
+        showNotification(err.message || 'Failed to toggle release', true);
+    }
 }
 
 async function deleteWinner(id) {
