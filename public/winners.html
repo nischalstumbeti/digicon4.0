@@ -23,49 +23,109 @@
     .header-logos .euphoria-banner { height: 85px; max-width: 700px; }
     .header-logos .header-side-logo { height: 60px; width: auto; object-fit: contain; }
     .main {
-      flex: 1; padding: 80px 24px 40px; max-width: 900px; margin: 0 auto; width: 100%;
+      flex: 1; padding: 60px 24px 50px; max-width: 1000px; margin: 0 auto; width: 100%;
       position: relative; z-index: 1;
     }
+    .hero-banner {
+      text-align: center; margin-bottom: 48px; padding: 32px 24px;
+    }
+    .hero-banner .trophy-icon { font-size: 4rem; margin-bottom: 12px; animation: float 3s ease-in-out infinite; }
     .main-title {
-      font-family: Verdana, Geneva, sans-serif; font-size: clamp(2.5rem, 6vw, 4rem);
-      letter-spacing: 8px; color: #e63946; margin-bottom: 8px; text-align: center;
-      text-shadow: 0 0 30px rgba(230, 57, 70, 0.3);
+      font-family: Verdana, Geneva, sans-serif; font-size: clamp(3rem, 8vw, 5rem);
+      letter-spacing: 12px; margin-bottom: 12px; text-align: center;
+      background: linear-gradient(135deg, #ffd700 0%, #ffec8b 25%, #ffd700 50%, #fff8dc 75%, #ffd700 100%);
+      background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; animation: shine 4s linear infinite;
     }
-    .subtitle { font-size: 1rem; color: #9ca3af; margin-bottom: 36px; text-align: center; letter-spacing: 3px; }
-    .winners-grid {
-      display: flex; flex-direction: column; gap: 24px; align-items: stretch;
-    }
+    .subtitle { font-size: 1.15rem; color: #e8e8e8; margin-bottom: 8px; text-align: center; letter-spacing: 4px; }
+    .hero-tagline { font-size: 0.95rem; color: #9ca3af; text-align: center; }
+    @keyframes shine { to { background-position: 200% center; } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    @keyframes glow-pulse { 0%, 100% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.4); } 50% { box-shadow: 0 0 50px rgba(255, 215, 0, 0.7); } }
+    @keyframes glow-silver { 0%, 100% { box-shadow: 0 0 25px rgba(192, 192, 192, 0.4); } 50% { box-shadow: 0 0 45px rgba(192, 192, 192, 0.6); } }
+    @keyframes glow-bronze { 0%, 100% { box-shadow: 0 0 25px rgba(205, 127, 50, 0.4); } 50% { box-shadow: 0 0 45px rgba(205, 127, 50, 0.6); } }
+    .winners-grid { display: flex; flex-direction: column; gap: 28px; align-items: stretch; }
     .winner-card {
-      background: rgba(18, 18, 18, 0.9);
-      border: 1px solid rgba(230, 57, 70, 0.25);
-      border-radius: 12px;
-      padding: 28px 32px;
-      transition: all 0.2s;
+      background: rgba(18, 18, 18, 0.92);
+      border-radius: 16px;
+      padding: 32px 40px;
+      transition: all 0.3s;
+      position: relative; overflow: hidden;
     }
-    .winner-card:hover { border-color: rgba(230, 57, 70, 0.5); box-shadow: 0 0 30px rgba(230, 57, 70, 0.1); }
+    .winner-card::before {
+      content: ''; position: absolute; top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+      animation: sweep 3s ease-in-out infinite;
+    }
+    @keyframes sweep { 0% { left: -100%; } 50%, 100% { left: 100%; } }
+    .winner-card.place-1 {
+      border: 2px solid #ffd700;
+      box-shadow: 0 0 40px rgba(255, 215, 0, 0.3), inset 0 0 60px rgba(255, 215, 0, 0.05);
+      animation: glow-pulse 2.5s ease-in-out infinite;
+      padding: 40px 48px;
+    }
+    .winner-card.place-1 .position-badge {
+      background: linear-gradient(135deg, #ffd700, #ffec8b);
+      color: #1a1a1a; font-size: 1.1rem; padding: 10px 24px;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    }
+    .winner-card.place-1 h3 { color: #ffd700; font-size: 1.8rem; text-shadow: 0 0 20px rgba(255, 215, 0, 0.4); }
+    .winner-card.place-2 {
+      border: 2px solid #c0c0c0;
+      box-shadow: 0 0 35px rgba(192, 192, 192, 0.25), inset 0 0 50px rgba(192, 192, 192, 0.04);
+      animation: glow-silver 2.8s ease-in-out infinite;
+      padding: 36px 44px;
+    }
+    .winner-card.place-2 .position-badge {
+      background: linear-gradient(135deg, #e8e8e8, #c0c0c0);
+      color: #1a1a1a; font-size: 1.05rem; padding: 9px 22px;
+      box-shadow: 0 0 18px rgba(192, 192, 192, 0.5);
+    }
+    .winner-card.place-2 h3 { color: #c0c0c0; font-size: 1.6rem; text-shadow: 0 0 18px rgba(192, 192, 192, 0.4); }
+    .winner-card.place-3 {
+      border: 2px solid #cd7f32;
+      box-shadow: 0 0 35px rgba(205, 127, 50, 0.25), inset 0 0 50px rgba(205, 127, 50, 0.04);
+      animation: glow-bronze 2.8s ease-in-out infinite;
+      padding: 36px 44px;
+    }
+    .winner-card.place-3 .position-badge {
+      background: linear-gradient(135deg, #daa520, #cd7f32);
+      color: #fff; font-size: 1.05rem; padding: 9px 22px;
+      box-shadow: 0 0 18px rgba(205, 127, 50, 0.5);
+    }
+    .winner-card.place-3 h3 { color: #cd7f32; text-shadow: 0 0 18px rgba(205, 127, 50, 0.4); }
+    .winner-card.place-other {
+      border: 1px solid rgba(230, 57, 70, 0.35);
+      box-shadow: 0 0 25px rgba(230, 57, 70, 0.15);
+    }
+    .winner-card.place-other .position-badge { background: #e63946; color: #fff; }
+    .winner-card.place-other h3 { color: #e63946; }
     .winner-card .position-badge {
-      display: inline-block; background: #e63946; color: #fff;
-      padding: 6px 16px; border-radius: 6px; font-size: 0.9rem; font-weight: 700;
-      letter-spacing: 2px; margin-bottom: 16px;
+      display: inline-flex; align-items: center; gap: 8px;
+      border-radius: 8px; font-weight: 800; letter-spacing: 3px;
+      margin-bottom: 20px;
     }
-    .winner-card h3 { color: #e63946; font-size: 1.4rem; margin: 0 0 8px 0; font-family: Verdana, Geneva, sans-serif; }
-    .winner-card .team-leader { color: #9ca3af; font-size: 1rem; margin-bottom: 8px; }
-    .winner-card .problem { color: #e8e8e8; font-size: 0.95rem; margin-bottom: 4px; }
+    .winner-card .position-badge .medal { font-size: 1.4em; }
+    .winner-card h3 { font-size: 1.4rem; margin: 0 0 10px 0; font-family: Verdana, Geneva, sans-serif; }
+    .winner-card .team-leader { color: #b8b8b8; font-size: 1.05rem; margin-bottom: 10px; }
+    .winner-card .problem { color: #e8e8e8; font-size: 1rem; margin-bottom: 6px; }
     .winner-card .members { color: #6b7280; font-size: 0.9rem; }
     .winners-empty {
-      text-align: center; padding: 60px 24px; color: #9ca3af;
+      text-align: center; padding: 80px 24px; color: #9ca3af;
       background: rgba(18, 18, 18, 0.6); border: 1px solid rgba(230, 57, 70, 0.2);
-      border-radius: 12px;
+      border-radius: 16px;
     }
-    .winners-empty p { font-size: 1.1rem; margin: 0; }
+    .winners-empty p { font-size: 1.2rem; margin: 0; }
     .site-footer { position: relative; z-index: 1; }
     @media (max-width: 768px) {
       .header-logos { gap: 12px; padding: 8px 16px; }
       .header-logos img { height: 32px; }
       .header-logos .euphoria-banner { height: 60px; max-width: 320px; }
       .header-logos .header-side-logo { height: 45px; }
-      .main { padding: 70px 16px 32px; }
-      .winner-card { padding: 20px 24px; }
+      .main { padding: 50px 16px 40px; }
+      .winner-card { padding: 24px 20px; }
+      .winner-card.place-1, .winner-card.place-2, .winner-card.place-3 { padding: 28px 24px; }
     }
   </style>
 </head>
@@ -87,8 +147,12 @@
     </div>
   </header>
   <div class="main">
-    <h1 class="main-title">WINNERS</h1>
-    <p class="subtitle">DIGICON 4.0 — Congratulations to our winners!</p>
+    <div class="hero-banner">
+      <div class="trophy-icon">🏆</div>
+      <h1 class="main-title">WINNERS</h1>
+      <p class="subtitle">DIGICON 4.0</p>
+      <p class="hero-tagline">Congratulations to our champions!</p>
+    </div>
     <div id="winnersGrid" class="winners-grid"></div>
     <div id="winnersEmpty" class="winners-empty" style="display: none;">
       <p>Winners will be announced soon. Stay tuned!</p>
@@ -101,7 +165,15 @@
   </footer>
   <script>
     const posLabels = { 1: '1st', 2: '2nd', 3: '3rd' };
+    const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
     function posLabel(n) { return posLabels[n] || (n + 'th'); }
+    function getPlaceClass(pos) {
+      const p = parseInt(pos, 10) || 1;
+      if (p === 1) return 'place-1';
+      if (p === 2) return 'place-2';
+      if (p === 3) return 'place-3';
+      return 'place-other';
+    }
     async function loadWinners() {
       try {
         const res = await fetch('/api/winners', { cache: 'no-store' });
@@ -115,15 +187,18 @@
         }
         empty.style.display = 'none';
         grid.style.display = 'flex';
-        grid.innerHTML = winners.map(w => `
-          <div class="winner-card">
-            <span class="position-badge">${posLabel(w.position || 1)} Place</span>
+        grid.innerHTML = winners.map(w => {
+          const pos = parseInt(w.position, 10) || 1;
+          const medal = medals[pos] ? `<span class="medal">${medals[pos]}</span>` : '';
+          return `
+          <div class="winner-card ${getPlaceClass(w.position)}">
+            <span class="position-badge">${medal}${posLabel(w.position || 1)} Place</span>
             <h3>${escapeHtml(w.teamName || '—')}</h3>
             <div class="team-leader">Team Leader: ${escapeHtml(w.teamLeader || '—')}</div>
             ${w.problemStatement ? `<div class="problem">Problem: ${escapeHtml(w.problemStatement)}</div>` : ''}
             ${w.teamMembers ? `<div class="members">Members: ${escapeHtml(w.teamMembers.replace(/\|/g, ', '))}</div>` : ''}
           </div>
-        `).join('');
+        `}).join('');
       } catch (err) {
         document.getElementById('winnersEmpty').style.display = 'block';
         document.getElementById('winnersEmpty').innerHTML = '<p>Unable to load winners. Please try again later.</p>';
