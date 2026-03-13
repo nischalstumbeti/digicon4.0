@@ -1730,9 +1730,11 @@ let evtSrc = null;
 function connectSSE() {
     if (evtSrc) evtSrc.close();
     evtSrc = new EventSource('/api/events');
+    const ld = document.getElementById('liveDot');
+    const rs = document.getElementById('realtimeStatus');
     evtSrc.onopen = () => {
-        const ld = document.getElementById('liveDot'); if (ld) ld.classList.add('green');
-        const rs = document.getElementById('realtimeStatus'); if (rs) rs.textContent = 'Live';
+        if (ld) ld.classList.add('green');
+        if (rs) rs.textContent = 'Live';
     };
     evtSrc.onmessage = e => {
         try {

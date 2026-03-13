@@ -242,11 +242,15 @@ class MemoryStore {
   }
 
   async addWinner(winner) {
+    const teamName = (winner.teamName || '').trim().toLowerCase();
+    if (!teamName) return null;
+    const isDuplicate = this.winners.some(w => String(w.teamName || '').toLowerCase() === teamName);
+    if (isDuplicate) return null;
     const id = 'w' + Date.now();
     this.winners.push({
       id,
       position: Number(winner.position) || 1,
-      teamName: winner.teamName || '',
+      teamName: (winner.teamName || '').trim(),
       teamLeader: winner.teamLeader || '',
       problemStatement: winner.problemStatement || '',
       teamMembers: winner.teamMembers || ''

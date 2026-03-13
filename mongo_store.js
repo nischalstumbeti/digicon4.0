@@ -563,9 +563,15 @@ class MongoStore {
   async addWinner(winner) {
     if (!this.collections) await this.init();
     const { winners } = this.collections;
+    const teamName = (winner.teamName || '').trim();
+    if (!teamName) return null;
+    const existing = await winners.findOne({
+      teamName: { $regex: new RegExp('^' + teamName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') }
+    });
+    if (existing) return null;
     const doc = {
       position: Number(winner.position) || 1,
-      teamName: winner.teamName || '',
+      teamName: teamName,
       teamLeader: winner.teamLeader || '',
       problemStatement: winner.problemStatement || '',
       teamMembers: winner.teamMembers || '',

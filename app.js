@@ -685,6 +685,9 @@ app.post('/api/admin/winners', async (req, res) => {
       return res.status(400).json({ error: 'Team name and team leader are required' });
     }
     const result = await db.addWinner({ position: position || 1, teamName, teamLeader, problemStatement: problemStatement || '', teamMembers: teamMembers || '' });
+    if (!result) {
+      return res.status(409).json({ error: 'This team has already been added as a winner. No duplicate winners allowed.' });
+    }
     const winners = await db.getAllWinners();
     broadcastUpdate('winners', { winners });
     res.json({ ok: true, id: result.id, winners });
