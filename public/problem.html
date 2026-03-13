@@ -684,7 +684,17 @@
       <input type="hidden" id="selectedProblemId" />
     </form>
     
-    <!-- Important Note -->
+    <!-- Already selected view (shown when team has already chosen a problem) -->
+    <div id="alreadySelectedView" class="problem-note" style="display: none; border-color: rgba(34, 197, 94, 0.5);">
+      <h3 style="color: #22c55e;">✓ Your Team Has Already Selected</h3>
+      <p style="margin: 12px 0 0 0; font-size: 1.1rem;">Your team has already selected a problem statement. You cannot change your selection.</p>
+      <div id="alreadySelectedProblem" style="margin-top: 16px; padding: 16px; background: rgba(34, 197, 94, 0.1); border-radius: 8px; border: 1px solid rgba(34, 197, 94, 0.3);">
+        <strong style="color: #22c55e;">Selected Problem:</strong> <span id="alreadySelectedTitle">—</span>
+      </div>
+    </div>
+
+    <!-- Important Note & Problem list (hidden when already selected) -->
+    <div id="problemSelectionArea">
     <div class="problem-note">
       <h3>⚠️ Important Information</h3>
       <ul>
@@ -694,6 +704,7 @@
     </div>
     
     <div class="problem-list" id="problemList"></div>
+    </div>
   </div>
   </div><!-- /problemPageContent -->
 
@@ -744,14 +755,31 @@
     async function checkReleaseAndLoad() {
       try {
         if (!loadTeamFromSession()) return;
+        const teamNumber = document.getElementById('teamNumber').value.trim();
         const res = await fetch('/api/problem-statement-released', { cache: 'no-store' });
         const data = await res.json();
         const released = data.released === true;
         const blockedEl = document.getElementById('blockedMessage');
         const contentEl = document.getElementById('problemPageContent');
+        const alreadySelectedEl = document.getElementById('alreadySelectedView');
+        const problemSelectionEl = document.getElementById('problemSelectionArea');
         if (released) {
           blockedEl.style.display = 'none';
           contentEl.style.display = 'block';
+          try {
+            const regRes = await fetch('/api/registration/' + encodeURIComponent(teamNumber), { cache: 'no-store' });
+            if (regRes.ok) {
+              const reg = await regRes.json();
+              if (reg && reg.problem_statement_id && reg.problem_title) {
+                alreadySelectedEl.style.display = 'block';
+                problemSelectionEl.style.display = 'none';
+                document.getElementById('alreadySelectedTitle').textContent = reg.problem_title;
+                return;
+              }
+            }
+          } catch (_) {}
+          alreadySelectedEl.style.display = 'none';
+          problemSelectionEl.style.display = 'block';
           load();
         } else {
           blockedEl.style.display = 'flex';
@@ -955,6 +983,11 @@
         }
         if (res.ok) {
           handleResponse(res, text, data);
+          return;
+        }
+        if (res.status === 409 && ((data.error || '').toLowerCase().includes('already selected') || (data.error || '').toLowerCase().includes('cannot change'))) {
+          showErrorPopup(data.error || 'Your team has already selected a problem. You cannot change your selection.');
+          checkReleaseAndLoad();
           return;
         }
         // Fallback: if team was not pre-stored (old flow), try full registration
