@@ -530,6 +530,7 @@
                     <div class="section-header">
                         <div class="section-header-left">📌 Problem Statements Selection</div>
                         <div class="section-header-actions">
+                            <button class="btn btn-outline btn-sm" onclick="exportProblemSelectionsToExcel()">📗 Export to Excel</button>
                             <button class="btn btn-outline btn-sm" onclick="exportData('problem-selections','pdf')">📄 Export PDF</button>
                         </div>
                     </div>
@@ -756,6 +757,7 @@ Jane Smith,21CS002,KARE,Madurai,jane@mail.com,9876543211,CSE,F,3</div>
                             <span id="teamsRegCount" style="font-size: 0.9rem; color: #94a3b8;">—</span>
                             <button class="btn btn-outline btn-sm" onclick="loadTeamsRegistrations()" style="margin-left: 8px;">🔄 Refresh</button>
                             <button class="btn btn-outline btn-sm" onclick="exportRegistrationsToCSV()" style="margin-left: 8px;">📊 Export to CSV</button>
+                            <button class="btn btn-outline btn-sm" onclick="exportRegistrationsToExcel()" style="margin-left: 8px;">📗 Export to Excel</button>
                             <button class="btn btn-outline btn-sm" onclick="exportData('registrations','pdf')" style="margin-left: 8px;">📄 Export PDF</button>
                         </div>
                     </div>
@@ -1078,6 +1080,76 @@ async function exportRegistrationsToCSV() {
         a.click();
         URL.revokeObjectURL(a.href);
         showNotification('CSV exported successfully.');
+    } catch (err) {
+        showNotification('Export failed: ' + err.message, true);
+    }
+}
+
+async function exportRegistrationsToExcel() {
+    try {
+        const res = await fetch('/api/registrations', { cache: 'no-store' });
+        const registrations = await res.json();
+        if (!Array.isArray(registrations) || registrations.length === 0) {
+            showNotification('No data to export.', true);
+            return;
+        }
+        const headers = ['#', 'Team #', 'Team Name', 'Team Leader', 'Team Members', 'Problem Statement'];
+        const rows = registrations.map((r, i) => [
+            i + 1,
+            r.team_number || '',
+            r.team_name || '',
+            r.team_leader || '',
+            (r.team_members || '').replace(/\n/g, ' ').replace(/\|/g, ', '),
+            r.problem_title || ''
+        ]);
+        const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Registrations</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table border="1"><thead><tr>' + headers.map(h => '<th>' + String(h).replace(/</g, '&lt;') + '</th>').join('') + '</tr></thead><tbody>' + rows.map(row => '<tr>' + row.map(c => '<td>' + String(c ?? '').replace(/</g, '&lt;') + '</td>').join('') + '</tr>').join('') + '</tbody></table></body></html>';
+        const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'teams-registration-' + new Date().toISOString().slice(0, 10) + '.xls';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        showNotification('Excel exported successfully.');
+    } catch (err) {
+        showNotification('Export failed: ' + err.message, true);
+    }
+}
+
+async function exportProblemSelectionsToExcel() {
+    try {
+        const res = await fetch('/api/registrations', { cache: 'no-store' });
+        const registrations = await res.json();
+        const confirmed = (registrations || []).filter(r => r.problem_title && r.problem_title !== 'Pending');
+        if (confirmed.length === 0) {
+            showNotification('No problem selections to export.', true);
+            return;
+        }
+        const byProblem = {};
+        confirmed.forEach(r => {
+            const key = r.problem_title || 'Unknown';
+            if (!byProblem[key]) byProblem[key] = [];
+            byProblem[key].push(r);
+        });
+        const headers = ['#', 'Team #', 'Team Name', 'Team Leader', 'Team Members'];
+        let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Problem Selections</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>';
+        Object.keys(byProblem).sort().forEach((probTitle, idx) => {
+            const teams = byProblem[probTitle];
+            html += '<h3>' + String(idx + 1) + '. ' + String(probTitle).replace(/</g, '&lt;') + ' (' + teams.length + ' team(s))</h3>';
+            html += '<table border="1"><thead><tr>' + headers.map(h => '<th>' + String(h).replace(/</g, '&lt;') + '</th>').join('') + '</tr></thead><tbody>';
+            teams.forEach((r, i) => {
+                const row = [i + 1, r.team_number || '', r.team_name || '', r.team_leader || '', (r.team_members || '').replace(/\|/g, ', ')];
+                html += '<tr>' + row.map(c => '<td>' + String(c ?? '').replace(/</g, '&lt;') + '</td>').join('') + '</tr>';
+            });
+            html += '</tbody></table><br/>';
+        });
+        html += '</body></html>';
+        const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'problem-selections-' + new Date().toISOString().slice(0, 10) + '.xls';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        showNotification('Excel exported successfully.');
     } catch (err) {
         showNotification('Export failed: ' + err.message, true);
     }
