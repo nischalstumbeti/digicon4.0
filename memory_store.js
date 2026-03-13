@@ -120,6 +120,22 @@ class MemoryStore {
       }));
   }
 
+  async getRegistrationByTeamNumber(teamNumber) {
+    const target = String(teamNumber).trim();
+    const reg = this.registrations.find(r => r.teamNumber === target);
+    if (!reg) return null;
+    const problem = reg.problemStatementId ? this.problemStatements.find(p => p.id === reg.problemStatementId) : null;
+    return {
+      team_number: reg.teamNumber,
+      team_name: reg.teamName,
+      team_leader: reg.teamLeader,
+      team_members: reg.teamMembers || '',
+      problem_statement_id: reg.problemStatementId || null,
+      problem_title: problem?.title || null,
+      registration_date_time: reg.registrationDateTime
+    };
+  }
+
   async isTeamNumberTaken(teamNumber) {
     const target = String(teamNumber).trim();
     return this.registrations.some(r => r.teamNumber === target);
@@ -144,6 +160,7 @@ class MemoryStore {
     const target = String(teamNumber).trim();
     const reg = this.registrations.find(r => r.teamNumber === target);
     if (!reg) return null;
+    if (reg.problemStatementId) return null; // Team already selected - cannot change
     const problem = this.problemStatements.find(p => p.id === problemStatementId);
     if (!problem) return null;
     const maxSel = Math.max(1, typeof problem.maxSelections === 'number' ? problem.maxSelections : parseInt(problem.maxSelections || '0', 10) || 0);

@@ -248,6 +248,22 @@ app.post('/api/register/team', async (req, res) => {
   }
 });
 
+// Get single registration by team number
+app.get('/api/registration/:teamNumber', async (req, res) => {
+  try {
+    const teamNumber = String(req.params.teamNumber || '').trim();
+    if (!teamNumber) return res.status(400).json({ error: 'Missing teamNumber' });
+    const reg = typeof db.getRegistrationByTeamNumber === 'function'
+      ? await db.getRegistrationByTeamNumber(teamNumber)
+      : null;
+    if (!reg) return res.status(404).json({ error: 'Registration not found' });
+    res.json(reg);
+  } catch (error) {
+    console.error('Error fetching registration:', error);
+    res.status(500).json({ error: 'Failed to fetch registration' });
+  }
+});
+
 // Update existing team registration with problem statement (when user selects problem on problem page)
 app.patch('/api/registration/:teamNumber', async (req, res) => {
   try {
@@ -255,6 +271,12 @@ app.patch('/api/registration/:teamNumber', async (req, res) => {
     const { problemStatementId } = req.body || {};
     if (!teamNumber || !problemStatementId) {
       return res.status(400).json({ error: 'Missing teamNumber or problemStatementId' });
+    }
+    const existing = typeof db.getRegistrationByTeamNumber === 'function'
+      ? await db.getRegistrationByTeamNumber(teamNumber)
+      : null;
+    if (existing && existing.problem_statement_id) {
+      return res.status(409).json({ error: 'Your team has already selected a problem. You cannot change your selection.' });
     }
     const ps = await db.getProblemStatementById(problemStatementId);
     if (!ps) return res.status(404).json({ error: 'Problem statement not found.' });

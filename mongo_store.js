@@ -166,6 +166,24 @@ class MongoStore {
     }));
   }
 
+  async getRegistrationByTeamNumber(teamNumber) {
+    if (!this.collections) await this.init();
+    const { regs, ps } = this.collections;
+    const target = String(teamNumber).trim();
+    const reg = await regs.findOne({ teamNumber: target });
+    if (!reg) return null;
+    const problem = reg.problemStatementId ? await ps.findOne({ id: reg.problemStatementId }) : null;
+    return {
+      team_number: reg.teamNumber,
+      team_name: reg.teamName,
+      team_leader: reg.teamLeader,
+      team_members: reg.teamMembers || '',
+      problem_statement_id: reg.problemStatementId || null,
+      problem_title: problem?.title || null,
+      registration_date_time: reg.registrationDateTime
+    };
+  }
+
   async isTeamNumberTaken(teamNumber) {
     if (!this.collections) await this.init();
     const { regs } = this.collections;
@@ -202,6 +220,7 @@ class MongoStore {
     const target = String(teamNumber).trim();
     const reg = await regs.findOne({ teamNumber: target });
     if (!reg) return null;
+    if (reg.problemStatementId) return null; // Team already selected - cannot change
     const problem = await ps.findOne({ id: problemStatementId });
     if (!problem) return null;
     const maxSel = Math.max(1, (typeof problem.maxSelections === 'number' ? problem.maxSelections : parseInt(problem.maxSelections || '0', 10) || 0));
