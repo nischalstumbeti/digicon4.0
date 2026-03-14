@@ -66,6 +66,10 @@ function requireAdmin(req, res, next) {
   if (isAuthenticated(req)) return next();
   return res.redirect('/admin-login');
 }
+function requireAdminApi(req, res, next) {
+  if (isAuthenticated(req)) return next();
+  return res.status(401).json({ error: 'Admin login required. Please log in to perform this action.' });
+}
 
 function formatProblems(statements) {
   return statements.map((ps) => {
@@ -679,7 +683,7 @@ app.get('/api/winners', async (req, res) => {
 });
 
 // Admin: get winners list and release status (always returns full list)
-app.get('/api/admin/winners', async (req, res) => {
+app.get('/api/admin/winners', requireAdminApi, async (req, res) => {
   try {
     const released = typeof db.getWinnersReleased === 'function' ? await db.getWinnersReleased() : false;
     const winners = typeof db.getAllWinners === 'function' ? await db.getAllWinners() : [];
@@ -691,7 +695,7 @@ app.get('/api/admin/winners', async (req, res) => {
 });
 
 // Admin: toggle winners release (show/hide on public page)
-app.post('/api/admin/winners/release', async (req, res) => {
+app.post('/api/admin/winners/release', requireAdminApi, async (req, res) => {
   try {
     if (typeof db.getWinnersReleased !== 'function' || typeof db.setWinnersReleased !== 'function') {
       return res.status(501).json({ error: 'Release not supported' });
@@ -709,7 +713,7 @@ app.post('/api/admin/winners/release', async (req, res) => {
 });
 
 // Admin: add winner
-app.post('/api/admin/winners', async (req, res) => {
+app.post('/api/admin/winners', requireAdminApi, async (req, res) => {
   try {
     const { position, teamName, teamLeader, problemStatement, teamMembers, teamPhoto } = req.body || {};
     if (!teamName || !teamLeader) {
@@ -730,7 +734,7 @@ app.post('/api/admin/winners', async (req, res) => {
 });
 
 // Admin: update winner photo
-app.patch('/api/admin/winners/:id', async (req, res) => {
+app.patch('/api/admin/winners/:id', requireAdminApi, async (req, res) => {
   try {
     const { teamPhoto } = req.body || {};
     if (typeof db.updateWinnerPhoto !== 'function') {
@@ -749,7 +753,7 @@ app.patch('/api/admin/winners/:id', async (req, res) => {
 });
 
 // Admin: delete winner
-app.delete('/api/admin/winners/:id', async (req, res) => {
+app.delete('/api/admin/winners/:id', requireAdminApi, async (req, res) => {
   try {
     const result = await db.deleteWinner(req.params.id);
     if (result.changes === 0) return res.status(404).json({ error: 'Winner not found' });
@@ -769,6 +773,9 @@ app.get('/problem', (req, res) => { res.sendFile(path.join(__dirname, 'public', 
 app.get('/winners', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'winners.html')); });
 app.get('/admin', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'admin.html')); });
 app.get('/admin-login', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'admin-login.html')); });
+app.get('/api/admin/check', (req, res) => {
+  res.json({ authenticated: isAuthenticated(req) });
+});
 app.post('/api/admin/login', express.urlencoded({ extended: false }), (req, res) => {
   const user = (req.body.username || '').trim();
   const pass = (req.body.password || '').trim();
@@ -778,9 +785,22 @@ app.post('/api/admin/login', express.urlencoded({ extended: false }), (req, res)
   }
   return res.status(401).send('<!DOCTYPE html><html><body style="font-family:Arial;padding:20px"><h3 style="color:#c10016">Access denied</h3><p>Admin credentials are not set or invalid. Please configure ADMIN_USER and ADMIN_PASS in environment variables.</p><a href="/admin-login">Back to login</a></body></html>');
 });
+app.post('/api/admin/login-json', express.json(), (req, res) => {
+  const user = ((req.body || {}).username || '').trim();
+  const pass = ((req.body || {}).password || '').trim();
+  if (ADMIN_USER && ADMIN_PASS && user === ADMIN_USER && pass === ADMIN_PASS) {
+    res.setHeader('Set-Cookie', 'admin_auth=1; Path=/; HttpOnly; SameSite=Lax');
+    return res.json({ ok: true });
+  }
+  return res.status(401).json({ error: 'Invalid username or password' });
+});
 app.post('/api/admin/logout', (req, res) => {
   res.setHeader('Set-Cookie', 'admin_auth=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax');
-  return res.redirect('/admin-login');
+  return res.redirect('/admin');
+});
+app.get('/api/admin/logout', (req, res) => {
+  res.setHeader('Set-Cookie', 'admin_auth=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax');
+  return res.redirect('/admin');
 });
 
 process.on('SIGINT', async () => { await db.close(); process.exit(0); });

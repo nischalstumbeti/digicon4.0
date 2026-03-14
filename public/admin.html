@@ -402,11 +402,11 @@
         <form id="loginForm">
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" required autocomplete="username" value="nischalst">
+                <input type="text" id="username" name="username" required autocomplete="username">
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" required autocomplete="current-password">
+                <input type="password" id="password" name="password" required autocomplete="current-password">
             </div>
             <button type="submit" class="login-btn">Login</button>
             <div id="loginError" class="login-error"></div>
@@ -908,24 +908,46 @@ Jane Smith,21CS002,KARE,Madurai,jane@mail.com,9876543211,CSE,F,3</div>
 
 <script>
 /* ── AUTH ──────────────────────────────────────────────── */
-document.getElementById('loginForm').addEventListener('submit', function(e) {
+async function checkAuth() {
+    try {
+        const res = await fetch('/api/admin/check', { credentials: 'include' });
+        const data = await res.json();
+        if (data.authenticated) {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('shell').classList.add('visible');
+            init();
+        }
+    } catch (_) {}
+}
+checkAuth();
+
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const user = document.getElementById('username').value.trim();
     const pass = document.getElementById('password').value.trim();
-    if (user === 'nischalst' && pass === '41300@cse') {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('shell').classList.add('visible');
-        init();
-    } else {
-        document.getElementById('loginError').textContent = 'Invalid username or password';
+    document.getElementById('loginError').textContent = '';
+    try {
+        const res = await fetch('/api/admin/login-json', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: user, password: pass }),
+            credentials: 'include'
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('shell').classList.add('visible');
+            init();
+        } else {
+            document.getElementById('loginError').textContent = data.error || 'Invalid username or password';
+        }
+    } catch (err) {
+        document.getElementById('loginError').textContent = 'Login failed. Please try again.';
     }
 });
 
 function logout() {
-    document.getElementById('shell').classList.remove('visible');
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('username').value = '';
-    document.getElementById('password').value = '';
+    window.location.href = '/api/admin/logout';  // GET clears cookie and redirects to /admin
 }
 
 /* ── NAVIGATION ────────────────────────────────────────── */
@@ -1108,9 +1130,15 @@ async function loadWinnersAdmin() {
         tableEl.style.display = 'none';
         emptyEl.style.display = 'none';
         const [winnersRes, regsRes] = await Promise.all([
-            fetch('/api/admin/winners', { cache: 'no-store' }),
+            fetch('/api/admin/winners', { cache: 'no-store', credentials: 'include' }),
             fetch('/api/registrations', { cache: 'no-store' })
         ]);
+        if (winnersRes.status === 401) {
+            document.getElementById('shell').classList.remove('visible');
+            document.getElementById('loginScreen').style.display = 'flex';
+            loadingEl.style.display = 'none';
+            return;
+        }
         const winnersData = await winnersRes.json();
         const winners = Array.isArray(winnersData.winners) ? winnersData.winners : (Array.isArray(winnersData) ? winnersData : []);
         const released = Boolean(winnersData.released);
@@ -1209,7 +1237,8 @@ async function submitWinner(e) {
         const res = await fetch('/api/admin/winners', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ position, teamName, teamLeader, problemStatement, teamMembers, teamPhoto })
+            body: JSON.stringify({ position, teamName, teamLeader, problemStatement, teamMembers, teamPhoto }),
+            credentials: 'include'
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to add winner');
@@ -1239,9 +1268,16 @@ async function uploadWinnerPhoto(fileInput) {
         const res = await fetch('/api/admin/winners/' + encodeURIComponent(id), {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ teamPhoto })
+            body: JSON.stringify({ teamPhoto }),
+            credentials: 'include'
         });
         const data = await res.json();
+        if (res.status === 401) {
+            showNotification('Admin login required. Please log in again.', true);
+            document.getElementById('shell').classList.remove('visible');
+            document.getElementById('loginScreen').style.display = 'flex';
+            return;
+        }
         if (!res.ok) throw new Error(data.error || 'Failed to update photo');
         showNotification('Team photo updated.');
         loadWinnersAdmin();
@@ -1253,7 +1289,7 @@ async function uploadWinnerPhoto(fileInput) {
 
 async function toggleWinnersRelease() {
     try {
-        const res = await fetch('/api/admin/winners/release', { method: 'POST', cache: 'no-store' });
+        const res = await fetch('/api/admin/winners/release', { method: 'POST', cache: 'no-store', credentials: 'include' });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to toggle release');
         showNotification(data.released ? 'Winners are now visible on the public page.' : 'Winners are now hidden.');
@@ -1266,7 +1302,7 @@ async function toggleWinnersRelease() {
 async function deleteWinner(id) {
     showConfirmModal('Confirm Delete', 'Are you sure you want to remove this winner?', async () => {
         try {
-            const res = await fetch(`/api/admin/winners/${encodeURIComponent(id)}`, { method: 'DELETE', cache: 'no-store' });
+            const res = await fetch(`/api/admin/winners/${encodeURIComponent(id)}`, { method: 'DELETE', cache: 'no-store', credentials: 'include' });
             if (!res.ok) { const e = await res.json(); throw new Error(e.error || res.statusText); }
             showNotification('Winner removed.');
             loadWinnersAdmin();
@@ -1284,7 +1320,7 @@ async function deleteAllWinners() {
                 return;
             }
             for (const w of winners) {
-                await fetch(`/api/admin/winners/${encodeURIComponent(w.id)}`, { method: 'DELETE', cache: 'no-store' });
+                await fetch(`/api/admin/winners/${encodeURIComponent(w.id)}`, { method: 'DELETE', cache: 'no-store', credentials: 'include' });
             }
             showNotification('All winners removed.');
             loadWinnersAdmin();
